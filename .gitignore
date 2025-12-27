@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+target/
+*.jar
+.env
+.env.local
+cdk-outputs.json
+cdk.out/
+.DS_Store
+*.log
+/tmp/

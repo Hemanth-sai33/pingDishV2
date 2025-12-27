@@ -1,0 +1,11 @@
+{
+  "name": "pingdish-mvp",
+  "private": true,
+  "workspaces": ["packages/infra", "packages/web-customer", "packages/web-kitchen"],
+  "scripts": {
+    "build:infra": "npm run build -w @pingdish/infra",
+    "deploy": "npm run deploy -w @pingdish/infra",
+    "dev:customer": "npm run dev -w @pingdish/web-customer",
+    "dev:kitchen": "npm run dev -w @pingdish/web-kitchen"
+  }
+}
