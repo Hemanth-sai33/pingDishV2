@@ -32,5 +32,7 @@ const apiStack = new ApiStack(app, 'PingDish-API', {
   confirmDeliveryFn: computeStack.confirmDeliveryFn,
   rejectDeliveryFn: computeStack.rejectDeliveryFn,
   closeSessionFn: computeStack.closeSessionFn,
+  registerRestaurantFn: computeStack.registerRestaurantFn,
+  getTablesFn: computeStack.getTablesFn,
 });
 apiStack.addDependency(computeStack);

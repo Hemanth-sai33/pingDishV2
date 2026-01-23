@@ -1,25 +1,42 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { TableCard } from './components/TableCard';
 import { TableData } from './types';
-import { connectWebSocket, markServing, WSMessage } from './services/apiService';
+import { connectWebSocket, markServing, WSMessage, getTables } from './services/apiService';
+
+const getRestaurantId = (): string | null => {
+  const path = window.location.pathname.replace(/^\/|\/$/g, '');
+  return path || null;
+};
+
+const formatName = (id: string) => id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
 const App: React.FC = () => {
-  const [tables, setTables] = useState<TableData[]>(() => 
-    Array.from({ length: 12 }, (_, i) => ({
-      id: `table-${i + 1}`,
-      tableNumber: i + 1,
-      pings: 0,
-      pingStatus: 'IDLE' as const,
-      sessionId: null,
-      firstPingTimestamp: null,
-      orderTimestamp: Date.now(),
-      items: []
-    }))
-  );
+  const [restaurantId] = useState<string | null>(getRestaurantId);
+  const [tables, setTables] = useState<TableData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sortedTables, setSortedTables] = useState<TableData[]>([]);
   const [alert, setAlert] = useState<{ tableNumber: number; message: string } | null>(null);
 
+  // Fetch tables for this restaurant
   useEffect(() => {
+    if (!restaurantId) return;
+    getTables(restaurantId).then(tableNumbers => {
+      setTables(tableNumbers.map(n => ({
+        id: `table-${n}`,
+        tableNumber: n,
+        pings: 0,
+        pingStatus: 'IDLE' as const,
+        sessionId: null,
+        firstPingTimestamp: null,
+        orderTimestamp: Date.now(),
+        items: []
+      })));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [restaurantId]);
+
+  useEffect(() => {
+    if (!restaurantId) return;
     connectWebSocket((msg: WSMessage) => {
       console.log("Kitchen received:", msg.event, "table:", msg.tableNumber);
       
@@ -52,8 +69,8 @@ const App: React.FC = () => {
             return t;
         }
       }));
-    });
-  }, []);
+    }, restaurantId);
+  }, [restaurantId]);
 
   const sortTables = useCallback((currentTables: TableData[]) => {
     return [...currentTables].sort((a, b) => {
@@ -79,6 +96,19 @@ const App: React.FC = () => {
       t.id === id ? { ...t, pings: t.pings + 1, pingStatus: 'PINGED', firstPingTimestamp: t.firstPingTimestamp || Date.now() } : t
     ));
   };
+
+  if (!restaurantId) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+        <div className="max-w-md bg-slate-900 border border-red-500 rounded-xl p-8 text-center">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-red-500 mb-4">Invalid URL</h1>
+          <p className="text-slate-300 mb-4">Please access with a restaurant ID in the URL.</p>
+          <code className="text-blue-400 text-sm">kitchen.pingdish.com/<span className="text-orange-500">your-restaurant-id</span></code>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8">
@@ -106,6 +136,7 @@ const App: React.FC = () => {
           <div>
             <h1 className="text-4xl font-black tracking-tighter text-white leading-none">PingDish</h1>
             <p className="text-orange-500 font-medium text-sm tracking-wide">Kitchen Dashboard</p>
+            <p className="text-blue-400 font-semibold text-base">{formatName(restaurantId)}</p>
           </div>
         </div>
 

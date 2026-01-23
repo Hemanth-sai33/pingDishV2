@@ -1,180 +1,152 @@
-# PingDish MVP
+# PingDish
 
-Real-time restaurant customer-kitchen communication system with multi-restaurant support.
+Real-time restaurant table service notification system. Customers scan QR codes and ping the kitchen when they need service.
+
+## Live URLs
+
+| URL | Purpose |
+|-----|---------|
+| https://www.pingdish.com | Landing page + Restaurant registration |
+| https://kitchen.pingdish.com/{restaurantId} | Kitchen dashboard |
+| https://app.pingdish.com/{restaurantId}/{tableNumber} | Customer app (QR code destination) |
 
 ## Architecture
 
 ```
 ┌─────────────────┐         ┌──────────────────────────────┐
-│  Customer App   │◄───────►│      AWS Backend             │
-│   (React/Vite)  │   WS    │  ┌────────────────────────┐  │
-│   Port 3001     │         │  │ API Gateway (REST)     │  │
-└─────────────────┘         │  │ API Gateway (WebSocket)│  │
-                            │  │ Lambda (Java 21)       │  │
-┌─────────────────┐         │  │ DynamoDB (3 tables)    │  │
-│Kitchen Dashboard│◄───────►│  └────────────────────────┘  │
-│   (React/Vite)  │   WS    │                              │
-│   Port 3000     │         └──────────────────────────────┘
-└─────────────────┘
+│  Landing Page   │         │      AWS Backend             │
+│ www.pingdish.com│────────►│  ┌────────────────────────┐  │
+└─────────────────┘         │  │ API Gateway (REST)     │  │
+                            │  │ API Gateway (WebSocket)│  │
+┌─────────────────┐         │  │ Lambda (Java 21)       │  │
+│  Customer App   │◄───────►│  │ DynamoDB (3 tables)    │  │
+│ app.pingdish.com│   WS    │  │ CloudFront + S3        │  │
+└─────────────────┘         │  └────────────────────────┘  │
+                            │                              │
+┌─────────────────┐         │                              │
+│Kitchen Dashboard│◄───────►│                              │
+│kitchen.pingdish │   WS    │                              │
+└─────────────────┘         └──────────────────────────────┘
 ```
+
+## Features
+
+- **Multi-tenant**: Each restaurant is isolated with unique ID and tables
+- **Self-service onboarding**: Restaurant owners register via landing page
+- **QR code generation**: Printable QR codes for each table
+- **Real-time sync**: WebSocket broadcasts sync across all browsers
+- **Cooldown system**: 15-second cooldown between pings
 
 ## Project Structure
 
 ```
 packages/
-├── service/              # Java 21 Lambda (Maven + Guice DI)
+├── service/              # Java 21 Lambda handlers
 │   └── src/main/java/com/pingdish/
-│       ├── activity/     # Lambda handlers (API layer)
+│       ├── activity/     # Lambda handlers
 │       ├── component/    # Business logic
-│       ├── dao/          # Data access layer
-│       ├── accessor/     # External API calls (WebSocket)
-│       ├── model/        # Domain models (Java records)
-│       └── config/       # Guice DI module
+│       ├── dao/          # Data access
+│       └── model/        # Domain models
 ├── infra/                # CDK TypeScript
-├── web-customer/         # Customer React app
-└── web-kitchen/          # Kitchen React dashboard
+├── web-landing/          # Landing page + onboarding
+├── web-customer/         # Customer app
+└── web-kitchen/          # Kitchen dashboard
 ```
 
-## Key Features
+## User Flow
 
-- **Multi-restaurant support**: Each restaurant has a unique UUID, enabling SaaS deployment
-- **Real-time sync**: WebSocket broadcasts sync ping count and cooldown across all browsers
-- **ISO 8601 timestamps**: Human-readable timestamps in DynamoDB
-- **QR Code format**: `{restaurantId}#{tableId}` (e.g., `897c1f8d-fe37-4f0f-bddb-3623234bf349#table-1`)
+### Restaurant Owner
+1. Visit `www.pingdish.com`
+2. Fill registration form (name, tables count, email)
+3. Get kitchen dashboard URL + printable QR codes
+4. Print QR codes and place on tables
 
-## Prerequisites
+### Customer
+1. Scan QR code on table
+2. App opens automatically
+3. Tap "Ping Kitchen" when service needed
+4. Receive notification when food is being served
+5. Confirm receipt
 
-- Java 21
-- Maven 3.8+
-- Node.js 18+
-- AWS CLI configured with credentials
-- AWS CDK (`npm install -g aws-cdk`)
-
-## Quick Start
-
-### 1. Deploy Backend
-
-```bash
-# Build Java service
-cd packages/service
-mvn clean package -DskipTests
-
-# Deploy CDK stacks
-cd ../infra
-npm install
-npx cdk bootstrap  # First time only
-npx cdk deploy --all --outputs-file cdk-outputs.json
-```
-
-### 2. Seed Table Data
-
-```bash
-# Creates a new restaurant with UUID and 12 tables
-./scripts/seed-tables.sh
-
-# Or use existing restaurant ID
-./scripts/seed-tables.sh <restaurant-uuid> "Restaurant Name"
-```
-
-The script outputs the restaurant ID and customer app URL.
-
-### 3. Update Frontend Config
-
-Update the API URLs in:
-- `packages/web-kitchen/src/services/apiService.ts` - Set `RESTAURANT_ID`
-- `packages/web-customer/src/services/kitchenService.ts` - API endpoints
-
-### 4. Run Frontends
-
-```bash
-# Terminal 1 - Kitchen Dashboard
-cd packages/web-kitchen
-npm install
-npm run dev  # http://localhost:3000
-
-# Terminal 2 - Customer App  
-cd packages/web-customer
-npm install
-npm run dev  # http://localhost:3001?restaurant=<UUID>&table=table-1
-```
+### Kitchen Staff
+1. Open kitchen dashboard (bookmarked URL)
+2. See real-time table status (idle/pinged/serving)
+3. Tables sorted by urgency (ping count)
+4. Tap "Serving" when delivering food
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/tables/{qrCode}/scan` | Customer scans QR code (URL-encoded) |
-| POST | `/api/sessions/{sessionId}/ping` | Customer pings kitchen |
-| POST | `/api/sessions/{sessionId}/serving` | Kitchen marks as serving |
-| POST | `/api/sessions/{sessionId}/confirm` | Customer confirms receipt |
-| POST | `/api/sessions/{sessionId}/reject` | Customer still waiting |
-| POST | `/api/tables/{qrCode}/close` | Close table session |
-
-**Note**: QR code must be URL-encoded (e.g., `restaurant-id%23table-1`)
-
-## WebSocket Events
-
-| Event | Direction | Payload |
-|-------|-----------|---------|
-| PING | Server → All | `{tableNumber, sessionId, pingCount, lastPingAt}` |
-| SERVING | Server → All | `{tableNumber, sessionId}` |
-| CONFIRMED | Server → All | `{tableNumber, sessionId}` |
-| REJECTED | Server → All | `{tableNumber, sessionId, message}` |
-| SESSION_CLOSED | Server → Kitchen | `{tableNumber, sessionId}` |
-
-## DynamoDB Tables
-
-### PingDish-Tables
-- **PK**: `QrCode` (restaurantId#tableId)
-- Stores: RestaurantId, RestaurantName, TableId, TableNumber
-
-### PingDish-Sessions
-- **PK**: `SessionId`
-- **GSI**: `RestaurantTable-Status-Index` (RestaurantTableId, Status)
-- Stores: RestaurantId, TableId, PingCount, PingStatus, LastPingAt (ISO 8601)
-
-### PingDish-Connections
-- **PK**: `ConnectionId`
-- Stores: Type (KITCHEN/CUSTOMER), RestaurantId, SessionId
+| POST | `/api/restaurants` | Register new restaurant |
+| GET | `/api/restaurants/{id}/tables` | Get restaurant tables |
+| POST | `/api/tables/{qrCode}/scan` | Customer scans QR |
+| POST | `/api/sessions/{id}/ping` | Send ping |
+| POST | `/api/sessions/{id}/serving` | Mark as serving |
+| POST | `/api/sessions/{id}/confirm` | Confirm delivery |
+| POST | `/api/sessions/{id}/reject` | Still waiting |
 
 ## Development
 
-### Rebuild & Redeploy Backend
+### Prerequisites
+- Java 21, Maven 3.8+
+- Node.js 18+
+- AWS CLI configured
+- AWS CDK (`npm install -g aws-cdk`)
 
+### Deploy Backend
 ```bash
-cd packages/service && mvn package -q
-cd ../infra && npx cdk deploy PingDish-Compute --require-approval never
+cd packages/service && mvn clean package -DskipTests
+cd ../infra && npx cdk deploy --all
 ```
 
-### Clear Test Data
-
+### Deploy Frontends
 ```bash
-# Clear sessions and connections (keeps tables)
-aws dynamodb scan --table-name PingDish-Sessions --region us-east-1 --query 'Items[*].SessionId.S' --output text | \
-  tr '\t' '\n' | xargs -I{} aws dynamodb delete-item --table-name PingDish-Sessions --key '{"SessionId":{"S":"{}"}}' --region us-east-1
+# Build all
+cd packages/web-landing && npm run build
+cd ../web-kitchen && npm run build
+cd ../web-customer && npm run build
 
-aws dynamodb scan --table-name PingDish-Connections --region us-east-1 --query 'Items[*].ConnectionId.S' --output text | \
-  tr '\t' '\n' | xargs -I{} aws dynamodb delete-item --table-name PingDish-Connections --key '{"ConnectionId":{"S":"{}"}}' --region us-east-1
+# Deploy to S3
+aws s3 sync packages/web-landing/dist s3://www.pingdish.com --delete
+aws s3 sync packages/web-kitchen/dist s3://kitchen.example.com --delete
+aws s3 sync packages/web-customer/dist s3://customer.example.com --delete
+
+# Invalidate CloudFront
+aws cloudfront create-invalidation --distribution-id <ID> --paths "/*"
 ```
 
-### Destroy Stack
-
+### Local Development
 ```bash
-cd packages/infra && npx cdk destroy --all
+# Kitchen Dashboard
+cd packages/web-kitchen && npm run dev  # http://localhost:3000
+
+# Customer App
+cd packages/web-customer && npm run dev  # http://localhost:3001
 ```
 
-## Testing Flow
+## Infrastructure
 
-1. Open Kitchen Dashboard at `http://localhost:3000`
-2. Open Customer App at `http://localhost:3001?restaurant=<UUID>&table=table-1`
-3. Open same URL in second browser to test multi-browser sync
-4. Customer taps "Ping Kitchen" → All browsers show ping, cooldown syncs
-5. Kitchen sees table turn green/amber/red based on ping count
-6. Kitchen taps "Serving" → Customer gets notification
-7. Customer confirms "Food Received" → Both reset
+### AWS Services
+- **CloudFront**: 3 distributions (landing, kitchen, customer)
+- **S3**: Static website hosting
+- **API Gateway**: REST API + WebSocket API
+- **Lambda**: Java 21 handlers
+- **DynamoDB**: Tables, Sessions, Connections
+- **ACM**: SSL certificate for *.pingdish.com
 
-## Deployed Endpoints (Example)
+### DynamoDB Tables
 
-```
-REST API: https://ctf7r5ruce.execute-api.us-east-1.amazonaws.com/prod/
-WebSocket: wss://rihn49nxzj.execute-api.us-east-1.amazonaws.com/prod
-```
+| Table | Primary Key | Purpose |
+|-------|-------------|---------|
+| PingDish-Tables | QrCode | Restaurant tables |
+| PingDish-Sessions | SessionId | Active customer sessions |
+| PingDish-Connections | ConnectionId | WebSocket connections |
+
+## DNS Setup (GoDaddy)
+
+| Type | Name | Value |
+|------|------|-------|
+| CNAME | www | d239v2muci68mi.cloudfront.net |
+| CNAME | kitchen | dn6lifgiaw8ql.cloudfront.net |
+| CNAME | app | dnuhkplxl5ahm.cloudfront.net |

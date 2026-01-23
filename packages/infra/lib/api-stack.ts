@@ -10,6 +10,8 @@ export interface ApiStackProps extends cdk.StackProps {
   confirmDeliveryFn: lambda.IFunction;
   rejectDeliveryFn: lambda.IFunction;
   closeSessionFn: lambda.IFunction;
+  registerRestaurantFn: lambda.IFunction;
+  getTablesFn: lambda.IFunction;
 }
 
 /**
@@ -40,6 +42,11 @@ export class ApiStack extends cdk.Stack {
     sessions.addResource('serving').addMethod('POST', new apigateway.LambdaIntegration(props.markServingFn));
     sessions.addResource('confirm').addMethod('POST', new apigateway.LambdaIntegration(props.confirmDeliveryFn));
     sessions.addResource('reject').addMethod('POST', new apigateway.LambdaIntegration(props.rejectDeliveryFn));
+
+    // /api/restaurants
+    const restaurants = api.addResource('restaurants');
+    restaurants.addMethod('POST', new apigateway.LambdaIntegration(props.registerRestaurantFn));
+    restaurants.addResource('{restaurantId}').addResource('tables').addMethod('GET', new apigateway.LambdaIntegration(props.getTablesFn));
 
     new cdk.CfnOutput(this, 'RestApiUrl', { 
       value: restApi.url,

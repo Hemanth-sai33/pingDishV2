@@ -24,6 +24,8 @@ export class ComputeStack extends cdk.Stack {
   public readonly confirmDeliveryFn: lambda.Function;
   public readonly rejectDeliveryFn: lambda.Function;
   public readonly closeSessionFn: lambda.Function;
+  public readonly registerRestaurantFn: lambda.Function;
+  public readonly getTablesFn: lambda.Function;
   public readonly webSocketUrl: string;
 
   constructor(scope: Construct, id: string, props: ComputeStackProps) {
@@ -57,7 +59,7 @@ export class ComputeStack extends cdk.Stack {
         },
       });
 
-      props.tablesTable.grantReadData(fn);
+      props.tablesTable.grantReadWriteData(fn);
       props.sessionsTable.grantReadWriteData(fn);
       props.connectionsTable.grantReadWriteData(fn);
 
@@ -76,6 +78,8 @@ export class ComputeStack extends cdk.Stack {
     this.confirmDeliveryFn = createLambda('ConfirmDelivery', 'com.pingdish.activity.ConfirmDeliveryActivity');
     this.rejectDeliveryFn = createLambda('RejectDelivery', 'com.pingdish.activity.RejectDeliveryActivity');
     this.closeSessionFn = createLambda('CloseSession', 'com.pingdish.activity.CloseSessionActivity');
+    this.registerRestaurantFn = createLambda('RegisterRestaurant', 'com.pingdish.activity.RegisterRestaurantActivity');
+    this.getTablesFn = createLambda('GetTables', 'com.pingdish.activity.GetTablesActivity');
 
     // WebSocket Lambdas + Routes
     const wsConnectFn = createLambda('WsConnect', 'com.pingdish.activity.WebSocketConnectActivity');

@@ -43,3 +43,10 @@ export const connectWebSocket = (onMessage: (msg: WSMessage) => void, restaurant
 export const markServing = async (sessionId: string) => {
   await fetch(`${API_URL}/sessions/${sessionId}/serving`, { method: 'POST' });
 };
+
+export const getTables = async (restaurantId: string): Promise<number[]> => {
+  const res = await fetch(`${API_URL}/restaurants/${restaurantId}/tables`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.tables || [];
+};

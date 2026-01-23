@@ -30,6 +30,12 @@ const App: React.FC = () => {
   const finalTotal = totalBill + tax;
 
   const getQrCode = () => {
+    // Try URL path first: /restaurantId/tableNumber
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    if (pathParts.length >= 2) {
+      return `${pathParts[0]}#${pathParts[1]}`;
+    }
+    // Fall back to query params
     const params = new URLSearchParams(window.location.search);
     const restaurant = params.get('restaurant') || 'demo-restaurant';
     const table = params.get('table') || 'table-1';
