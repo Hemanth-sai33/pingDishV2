@@ -26,6 +26,8 @@ public class WebSocketConnectActivity implements RequestHandler<APIGatewayV2WebS
         var params = event.getQueryStringParameters();
         String restaurantId = params != null ? params.get("restaurantId") : null;
         String sessionId = params != null ? params.get("sessionId") : null;
+        
+        System.out.println("WS Connect: connectionId=" + connectionId + ", restaurantId=" + restaurantId + ", sessionId=" + sessionId);
 
         wsComponent.onConnect(connectionId, restaurantId, sessionId);
 

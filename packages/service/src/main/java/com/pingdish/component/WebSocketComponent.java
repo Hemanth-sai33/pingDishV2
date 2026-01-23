@@ -24,6 +24,7 @@ public class WebSocketComponent {
      */
     public void onConnect(String connectionId, String restaurantId, String sessionId) {
         ConnectionType type = sessionId != null ? ConnectionType.CUSTOMER : ConnectionType.KITCHEN;
+        System.out.println("WebSocketComponent.onConnect: type=" + type + ", sessionId=" + sessionId + ", restaurantId=" + restaurantId);
         connectionDao.saveConnection(Connection.builder()
                 .connectionId(connectionId)
                 .type(type)

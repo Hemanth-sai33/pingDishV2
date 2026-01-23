@@ -31,7 +31,10 @@ public class PingKitchenActivity implements RequestHandler<APIGatewayProxyReques
 
         if (result.error() != null) {
             int status = "Cooldown".equals(result.error()) ? 429 : 404;
-            return response(status, Map.of("error", result.error(), "remainingSeconds", result.remainingSeconds()));
+            var body = new java.util.HashMap<String, Object>();
+            body.put("error", result.error());
+            if (result.remainingSeconds() != null) body.put("remainingSeconds", result.remainingSeconds());
+            return response(status, body);
         }
         return response(200, Map.of("success", true, "pingCount", result.pingCount()));
     }

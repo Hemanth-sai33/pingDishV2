@@ -1,7 +1,7 @@
 import { OrderItem } from "../types";
 
-const API_BASE = "https://ctf7r5ruce.execute-api.us-east-1.amazonaws.com/prod";
-const WS_URL = "wss://rihn49nxzj.execute-api.us-east-1.amazonaws.com/prod";
+const API_BASE = "https://7fqrf6dfl6.execute-api.ap-south-2.amazonaws.com/prod";
+const WS_URL = "wss://4dido96orb.execute-api.ap-south-2.amazonaws.com/prod";
 
 export const scanTable = async (qrCode: string) => {
   const res = await fetch(`${API_BASE}/api/tables/${encodeURIComponent(qrCode)}/scan`, { method: "POST" });

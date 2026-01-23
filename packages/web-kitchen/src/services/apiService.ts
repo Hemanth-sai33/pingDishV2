@@ -1,8 +1,8 @@
-const WS_URL = 'wss://rihn49nxzj.execute-api.us-east-1.amazonaws.com/prod';
-const API_URL = 'https://ctf7r5ruce.execute-api.us-east-1.amazonaws.com/prod/api';
+const WS_URL = 'wss://4dido96orb.execute-api.ap-south-2.amazonaws.com/prod';
+const API_URL = 'https://7fqrf6dfl6.execute-api.ap-south-2.amazonaws.com/prod/api';
 
 // Default restaurant for demo - in production, this would come from auth/config
-const RESTAURANT_ID = '897c1f8d-fe37-4f0f-bddb-3623234bf349';
+const RESTAURANT_ID = 'demo-restaurant';
 
 export interface WSMessage {
   event: string;
