@@ -1,3 +1,349 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hero gradient mesh background */
+.hero-gradient {
+  background: linear-gradient(135deg, #0c1322 0%, #131c2a 40%, #1a2332 70%, #0c1322 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-gradient::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 80%;
+  height: 150%;
+  background: radial-gradient(ellipse at center, rgba(249, 115, 22, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-gradient::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -10%;
+  width: 60%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, rgba(249, 115, 22, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Glass morphism card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Feature card hover effect */
+.feature-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(249, 115, 22, 0.15);
+}
+
+/* 3D Scene decorative elements */
+.scene-element {
+  position: absolute;
+  border-radius: 20px;
+  opacity: 0.6;
+}
+
+/* Glow effect for the bell */
+.bell-glow {
+  filter: drop-shadow(0 0 30px rgba(249, 115, 22, 0.4));
+}
+
+/* Animated grid pattern */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(249, 115, 22, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(249, 115, 22, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Step connector line */
+.step-connector {
+  position: relative;
+}
+
+.step-connector::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -50%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(to right, #f97316, transparent);
+  opacity: 0.3;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0c1322;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}
+
+/* Stat card shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.stat-shimmer {
+  background: linear-gradient(90deg, transparent 30%, rgba(249, 115, 22, 0.05) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════
+   HERO ANIMATION — Scene Transitions
+   ═══════════════════════════════════════════ */
+
+/* Scene container */
+.scene-panel {
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scene-panel.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.scene-panel.exit-up {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.98);
+}
+
+.scene-panel.enter-below {
+  opacity: 0;
+  transform: translateY(20px) scale(0.98);
+}
+
+/* Ping button tap effect */
+@keyframes tap-press {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.93); }
+  60%  { transform: scale(0.93); }
+  100% { transform: scale(1); }
+}
+
+.btn-tap {
+  animation: tap-press 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Ping ripple rings expanding outward from button */
+@keyframes ping-ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.ping-ripple {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  border: 2px solid rgba(249, 115, 22, 0.5);
+  pointer-events: none;
+}
+
+.ping-ripple-1 { animation: ping-ripple 1.2s ease-out 0s forwards; }
+.ping-ripple-2 { animation: ping-ripple 1.2s ease-out 0.25s forwards; }
+.ping-ripple-3 { animation: ping-ripple 1.2s ease-out 0.5s forwards; }
+
+/* Finger/cursor indicator */
+@keyframes finger-tap {
+  0%   { opacity: 0; transform: translate(-50%, -20px) scale(0.8); }
+  30%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  50%  { transform: translate(-50%, 4px) scale(0.9); }
+  65%  { transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -10px) scale(0.8); }
+}
+
+.finger-tap {
+  animation: finger-tap 1.5s ease-in-out forwards;
+}
+
+/* Status text slide transitions */
+@keyframes status-slide-in {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.status-enter {
+  animation: status-slide-in 0.4s ease-out forwards;
+}
+
+/* Kitchen dashboard card flash */
+@keyframes card-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+  20%  { box-shadow: 0 0 20px 4px rgba(249, 115, 22, 0.4); }
+  40%  { box-shadow: 0 0 8px 2px rgba(249, 115, 22, 0.2); }
+  60%  { box-shadow: 0 0 16px 3px rgba(249, 115, 22, 0.35); }
+  100% { box-shadow: 0 0 12px 2px rgba(249, 115, 22, 0.25); }
+}
+
+.card-ping-flash {
+  animation: card-flash 1s ease-in-out forwards;
+}
+
+/* Notification toast slide-in from top */
+@keyframes toast-slide-in {
+  0%   { opacity: 0; transform: translateY(-100%) scale(0.95); }
+  60%  { opacity: 1; transform: translateY(4px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.toast-enter {
+  animation: toast-slide-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Badge bounce-in */
+@keyframes badge-bounce {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.badge-bounce {
+  animation: badge-bounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Serving state pulse */
+@keyframes serving-pulse {
+  0%, 100% { opacity: 0.8; }
+  50%      { opacity: 1; }
+}
+
+.serving-pulse {
+  animation: serving-pulse 1.5s ease-in-out infinite;
+}
+
+/* Checkmark draw animation */
+@keyframes check-draw {
+  0%   { stroke-dashoffset: 48; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.check-draw path {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: check-draw 0.6s ease-out 0.2s forwards;
+}
+
+/* Circle grow behind checkmark */
+@keyframes circle-grow {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.circle-grow {
+  animation: circle-grow 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Dish slide-in */
+@keyframes dish-slide {
+  0%   { opacity: 0; transform: translateX(30px) rotate(10deg); }
+  60%  { opacity: 1; transform: translateX(-4px) rotate(-2deg); }
+  100% { opacity: 1; transform: translateX(0) rotate(0); }
+}
+
+.dish-slide-in {
+  animation: dish-slide 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Star sparkle celebration */
+@keyframes sparkle {
+  0%   { opacity: 0; transform: scale(0) rotate(0deg); }
+  50%  { opacity: 1; transform: scale(1.2) rotate(180deg); }
+  100% { opacity: 0; transform: scale(0) rotate(360deg); }
+}
+
+.sparkle-1 { animation: sparkle 0.8s ease-out 0.1s forwards; }
+.sparkle-2 { animation: sparkle 0.8s ease-out 0.3s forwards; }
+.sparkle-3 { animation: sparkle 0.8s ease-out 0.5s forwards; }
+.sparkle-4 { animation: sparkle 0.8s ease-out 0.2s forwards; }
+.sparkle-5 { animation: sparkle 0.8s ease-out 0.4s forwards; }
+
+/* Floating card transitions */
+@keyframes float-card-in {
+  0%   { opacity: 0; transform: translateY(10px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes float-card-out {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-10px) scale(0.9); }
+}
+
+.float-card-enter {
+  animation: float-card-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.float-card-exit {
+  animation: float-card-out 0.3s ease-in forwards;
+}
+
+/* Scene label pill */
+@keyframes label-fade {
+  0%   { opacity: 0; transform: translateY(4px); }
+  20%  { opacity: 1; transform: translateY(0); }
+  80%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+
+.scene-label {
+  animation: label-fade 3.5s ease-in-out forwards;
+}
+
+/* Progress bar for scene timing */
+@keyframes progress-fill {
+  0%   { width: 0; }
+  100% { width: 100%; }
+}
+
+.scene-progress {
+  animation: progress-fill 4s linear forwards;
+}

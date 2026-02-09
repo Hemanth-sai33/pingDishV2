@@ -4,15 +4,15 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PingDish - Restaurant Table Service Notifications</title>
-    <!-- [FIX 6.2] Content Security Policy -->
+    <meta name="description" content="PingDish - Real-time restaurant table service notifications. Customers scan QR codes and ping your kitchen instantly. Free forever." />
+    <!-- [FIX 6.2] Content Security Policy — updated for Google Fonts -->
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self';
                    script-src 'self';
-                   style-src 'self' 'unsafe-inline';
+                   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
                    img-src 'self' https://api.qrserver.com data:;
                    connect-src 'self' https://*.execute-api.ap-south-2.amazonaws.com;
-                   font-src 'self';
+                   font-src 'self' https://fonts.gstatic.com;
                    object-src 'none';
                    base-uri 'self';
                    form-action 'self';" />
@@ -20,8 +20,12 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <title>PingDish - Restaurant Table Service Notifications</title>
   </head>
-  <body>
+  <body class="bg-[#080e1a]">
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
   </body>
