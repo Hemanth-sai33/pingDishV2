@@ -11,6 +11,8 @@ export interface ComputeStackProps extends cdk.StackProps {
   tablesTable: dynamodb.ITable;
   sessionsTable: dynamodb.ITable;
   connectionsTable: dynamodb.ITable;
+  enquiriesTable: dynamodb.ITable;
+  restaurantsTable: dynamodb.ITable;
 }
 
 /**
@@ -26,6 +28,12 @@ export class ComputeStack extends cdk.Stack {
   public readonly closeSessionFn: lambda.Function;
   public readonly registerRestaurantFn: lambda.Function;
   public readonly getTablesFn: lambda.Function;
+  public readonly submitEnquiryFn: lambda.Function;
+  public readonly listEnquiriesFn: lambda.Function;
+  public readonly reviewEnquiryFn: lambda.Function;
+  public readonly restaurantLoginFn: lambda.Function;
+  public readonly resetPasswordFn: lambda.Function;
+  public readonly listRestaurantsFn: lambda.Function;
   public readonly webSocketUrl: string;
 
   constructor(scope: Construct, id: string, props: ComputeStackProps) {
@@ -56,12 +64,15 @@ export class ComputeStack extends cdk.Stack {
         timeout: cdk.Duration.seconds(30),
         environment: {
           WS_API_ID: wsApi.apiId,
+          ADMIN_SECRET: process.env.ADMIN_SECRET || 'pingdish-admin-2026',
         },
       });
 
       props.tablesTable.grantReadWriteData(fn);
       props.sessionsTable.grantReadWriteData(fn);
       props.connectionsTable.grantReadWriteData(fn);
+      props.enquiriesTable.grantReadWriteData(fn);
+      props.restaurantsTable.grantReadWriteData(fn);
 
       fn.addToRolePolicy(new iam.PolicyStatement({
         actions: ['execute-api:ManageConnections'],
@@ -80,6 +91,23 @@ export class ComputeStack extends cdk.Stack {
     this.closeSessionFn = createLambda('CloseSession', 'com.pingdish.activity.CloseSessionActivity');
     this.registerRestaurantFn = createLambda('RegisterRestaurant', 'com.pingdish.activity.RegisterRestaurantActivity');
     this.getTablesFn = createLambda('GetTables', 'com.pingdish.activity.GetTablesActivity');
+
+    // Enquiry + Auth Lambdas
+    this.submitEnquiryFn = createLambda('SubmitEnquiry', 'com.pingdish.activity.SubmitEnquiryActivity');
+    this.listEnquiriesFn = createLambda('ListEnquiries', 'com.pingdish.activity.ListEnquiriesActivity');
+    this.reviewEnquiryFn = createLambda('ReviewEnquiry', 'com.pingdish.activity.ReviewEnquiryActivity');
+    this.restaurantLoginFn = createLambda('RestaurantLogin', 'com.pingdish.activity.RestaurantLoginActivity');
+    this.resetPasswordFn = createLambda('ResetPassword', 'com.pingdish.activity.ResetPasswordActivity');
+    this.listRestaurantsFn = createLambda('ListRestaurants', 'com.pingdish.activity.ListRestaurantsActivity');
+
+    // SES permissions for enquiry/review/reset handlers
+    const sesPolicy = new iam.PolicyStatement({
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: ['*'],
+    });
+    this.submitEnquiryFn.addToRolePolicy(sesPolicy);
+    this.reviewEnquiryFn.addToRolePolicy(sesPolicy);
+    this.resetPasswordFn.addToRolePolicy(sesPolicy);
 
     // WebSocket Lambdas + Routes
     const wsConnectFn = createLambda('WsConnect', 'com.pingdish.activity.WebSocketConnectActivity');

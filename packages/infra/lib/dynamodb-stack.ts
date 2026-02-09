@@ -10,6 +10,8 @@ export class DynamoDbStack extends cdk.Stack {
   public readonly tablesTable: dynamodb.Table;
   public readonly sessionsTable: dynamodb.Table;
   public readonly connectionsTable: dynamodb.Table;
+  public readonly enquiriesTable: dynamodb.Table;
+  public readonly restaurantsTable: dynamodb.Table;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -49,6 +51,26 @@ export class DynamoDbStack extends cdk.Stack {
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
       pointInTimeRecovery: true,
       timeToLiveAttribute: 'ExpiresAt',                           // [FIX 6.3] Auto-expire stale connections
+    });
+
+    // Enquiries: PK = EnquiryId — stores contact form submissions
+    this.enquiriesTable = new dynamodb.Table(this, 'EnquiriesTable', {
+      tableName: 'PingDish-Enquiries',
+      partitionKey: { name: 'EnquiryId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      pointInTimeRecovery: true,
+    });
+
+    // Restaurants: PK = RestaurantId — stores onboarded restaurant credentials & audit
+    this.restaurantsTable = new dynamodb.Table(this, 'RestaurantsTable', {
+      tableName: 'PingDish-Restaurants',
+      partitionKey: { name: 'RestaurantId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      pointInTimeRecovery: true,
     });
   }
 }

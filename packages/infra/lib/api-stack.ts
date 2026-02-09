@@ -12,6 +12,12 @@ export interface ApiStackProps extends cdk.StackProps {
   closeSessionFn: lambda.IFunction;
   registerRestaurantFn: lambda.IFunction;
   getTablesFn: lambda.IFunction;
+  submitEnquiryFn: lambda.IFunction;
+  listEnquiriesFn: lambda.IFunction;
+  reviewEnquiryFn: lambda.IFunction;
+  restaurantLoginFn: lambda.IFunction;
+  resetPasswordFn: lambda.IFunction;
+  listRestaurantsFn: lambda.IFunction;
 }
 
 /**
@@ -67,7 +73,17 @@ export class ApiStack extends cdk.Stack {
     // /api/restaurants
     const restaurants = api.addResource('restaurants');
     restaurants.addMethod('POST', new apigateway.LambdaIntegration(props.registerRestaurantFn));
-    restaurants.addResource('{restaurantId}').addResource('tables').addMethod('GET', new apigateway.LambdaIntegration(props.getTablesFn));
+    restaurants.addMethod('GET', new apigateway.LambdaIntegration(props.listRestaurantsFn));
+    const restaurantById = restaurants.addResource('{restaurantId}');
+    restaurantById.addResource('tables').addMethod('GET', new apigateway.LambdaIntegration(props.getTablesFn));
+    restaurantById.addResource('login').addMethod('POST', new apigateway.LambdaIntegration(props.restaurantLoginFn));
+    restaurantById.addResource('reset-password').addMethod('POST', new apigateway.LambdaIntegration(props.resetPasswordFn));
+
+    // /api/enquiries
+    const enquiries = api.addResource('enquiries');
+    enquiries.addMethod('POST', new apigateway.LambdaIntegration(props.submitEnquiryFn));
+    enquiries.addMethod('GET', new apigateway.LambdaIntegration(props.listEnquiriesFn));
+    enquiries.addResource('{enquiryId}').addResource('review').addMethod('POST', new apigateway.LambdaIntegration(props.reviewEnquiryFn));
 
     new cdk.CfnOutput(this, 'RestApiUrl', { 
       value: restApi.url,

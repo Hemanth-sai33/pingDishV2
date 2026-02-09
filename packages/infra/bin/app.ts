@@ -20,6 +20,8 @@ const computeStack = new ComputeStack(app, 'PingDish-Compute', {
   tablesTable: dynamoDbStack.tablesTable,
   sessionsTable: dynamoDbStack.sessionsTable,
   connectionsTable: dynamoDbStack.connectionsTable,
+  enquiriesTable: dynamoDbStack.enquiriesTable,
+  restaurantsTable: dynamoDbStack.restaurantsTable,
 });
 computeStack.addDependency(dynamoDbStack);
 
@@ -34,5 +36,11 @@ const apiStack = new ApiStack(app, 'PingDish-API', {
   closeSessionFn: computeStack.closeSessionFn,
   registerRestaurantFn: computeStack.registerRestaurantFn,
   getTablesFn: computeStack.getTablesFn,
+  submitEnquiryFn: computeStack.submitEnquiryFn,
+  listEnquiriesFn: computeStack.listEnquiriesFn,
+  reviewEnquiryFn: computeStack.reviewEnquiryFn,
+  restaurantLoginFn: computeStack.restaurantLoginFn,
+  resetPasswordFn: computeStack.resetPasswordFn,
+  listRestaurantsFn: computeStack.listRestaurantsFn,
 });
 apiStack.addDependency(computeStack);

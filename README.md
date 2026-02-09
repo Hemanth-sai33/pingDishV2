@@ -6,7 +6,9 @@ Real-time restaurant table service notification system. Customers scan QR codes 
 
 | URL | Purpose |
 |-----|---------|
-| https://www.pingdish.com | Landing page + Restaurant registration |
+| https://www.pingdish.com | Landing page |
+| https://www.pingdish.com/#login | Restaurant owner login |
+| https://www.pingdish.com/#admin | Admin panel |
 | https://kitchen.pingdish.com/{restaurantId} | Kitchen dashboard |
 | https://app.pingdish.com/{restaurantId}/{tableNumber} | Customer app (QR code destination) |
 
@@ -19,10 +21,10 @@ Real-time restaurant table service notification system. Customers scan QR codes 
 └─────────────────┘         │  │ API Gateway (REST)     │  │
                             │  │ API Gateway (WebSocket)│  │
 ┌─────────────────┐         │  │ Lambda (Java 21)       │  │
-│  Customer App   │◄───────►│  │ DynamoDB (3 tables)    │  │
+│  Customer App   │◄───────►│  │ DynamoDB (5 tables)    │  │
 │ app.pingdish.com│   WS    │  │ CloudFront + S3        │  │
-└─────────────────┘         │  └────────────────────────┘  │
-                            │                              │
+└─────────────────┘         │  │ SES (transactional)    │  │
+                            │  └────────────────────────┘  │
 ┌─────────────────┐         │                              │
 │Kitchen Dashboard│◄───────►│                              │
 │kitchen.pingdish │   WS    │                              │
@@ -32,31 +34,44 @@ Real-time restaurant table service notification system. Customers scan QR codes 
 ## Features
 
 - **Multi-tenant**: Each restaurant is isolated with unique ID and tables
-- **Self-service onboarding**: Restaurant owners register via landing page
+- **Enquiry-based onboarding**: Restaurant owners enquire via contact form → admin approves → credentials auto-generated and emailed
+- **Admin panel**: View enquiries, approve/decline restaurants, manage onboarded restaurants, reset passwords
+- **Restaurant login**: Owners log in at `#login` to access their kitchen dashboard
 - **QR code generation**: Printable QR codes for each table
 - **Real-time sync**: WebSocket broadcasts sync across all browsers
 - **Cooldown system**: 15-second cooldown between pings
-- **Session lifecycle**: Sessions auto-close on delivery confirmation; customers must re-scan QR for a new session
+- **Session lifecycle**: Sessions auto-close on delivery confirmation; customers see a thank you screen
+
+## Restaurant Onboarding Flow
+
+```
+1. Owner fills "Reach Out" form on landing page
+   → Enquiry saved to DynamoDB + email sent to support@pingdish.com
+
+2. Admin visits #admin → reviews pending enquiries
+   → Approves with restaurantId + table count
+   → Password auto-generated (12-char alphanumeric)
+
+3. System creates restaurant record + table entries in DynamoDB
+   → Credentials emailed to owner via SES
+
+4. Owner logs in at #login → redirected to kitchen dashboard
+```
 
 ## Security
 
-The following security measures are implemented:
-
-- **CORS**: Restricted to `*.pingdish.com` and localhost (dev) — validated per-request in Lambda
-- **CSRF protection**: Custom `X-Requested-With: PingDish` header required on all API calls
-- **CSP**: Content Security Policy headers on all frontends (`connect-src` scoped to `ap-south-2`)
-- **Security headers**: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` on all pages
-- **Input validation**: Server-side validation on restaurant registration (restaurantId, name, email, table count)
-- **Error handling**: Centralized `ErrorHandler` — no stack traces or internal details leak to clients
-- **XSS prevention**: `escapeHtml()` on user-generated content in landing page
-- **URL validation**: Open redirect prevention on kitchen dashboard links
-- **API throttling**: 50 requests/second burst, 10,000 requests/day usage plan
-- **WebSocket limits**: Max 50 connections per restaurant, 2-hour TTL on connections
-- **DynamoDB TTL**: Sessions expire after 4 hours, connections after 2 hours
-- **DynamoDB encryption**: AWS-managed encryption at rest
-- **Point-in-time recovery**: Enabled on all DynamoDB tables
-- **Removal policy**: `RETAIN` on all DynamoDB tables to prevent accidental deletion
-- **Logging**: `java.util.logging` throughout — no `System.out.println`, connection IDs masked
+- **CORS**: Restricted to `*.pingdish.com` and localhost (dev)
+- **CSRF protection**: Custom `X-Requested-With: PingDish` header on all API calls
+- **CSP**: Content Security Policy on all frontends
+- **Security headers**: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`
+- **Input validation**: Server-side validation on all registration fields
+- **Error handling**: Centralized — no stack traces leak to clients
+- **XSS prevention**: `escapeHtml()` on user-generated content
+- **Admin auth**: Admin endpoints protected by `X-Admin-Key` header
+- **Password hashing**: SHA-256 hashed passwords stored in DynamoDB
+- **API throttling**: 50 req/s burst, 10,000 req/day
+- **WebSocket limits**: Max 50 connections/restaurant, 2-hour TTL
+- **DynamoDB**: TTL on sessions/connections, encryption at rest, PITR, RETAIN policy
 
 ## Project Structure
 
@@ -64,49 +79,39 @@ The following security measures are implemented:
 packages/
 ├── service/              # Java 21 Lambda handlers
 │   └── src/main/java/com/pingdish/
-│       ├── activity/     # Lambda handlers
+│       ├── activity/     # Lambda handlers (15 total)
 │       ├── component/    # Business logic
 │       ├── dao/          # Data access
 │       ├── model/        # Domain models
 │       └── util/         # ResponseHelper, ErrorHandler, InputValidator
-├── infra/                # CDK TypeScript
-├── web-landing/          # Landing page + onboarding
+├── infra/                # CDK TypeScript (3 stacks)
+├── web-landing/          # Landing page + login + admin panel
 ├── web-customer/         # Customer app
 └── web-kitchen/          # Kitchen dashboard
 ```
 
-## User Flow
-
-### Restaurant Owner
-1. Visit `www.pingdish.com`
-2. Fill registration form (name, tables count, email)
-3. Get kitchen dashboard URL + printable QR codes
-4. Print QR codes and place on tables
-
-### Customer
-1. Scan QR code on table
-2. App opens automatically
-3. Tap "Ping Kitchen" when service needed
-4. Receive notification when food is being served
-5. Confirm receipt — session closes with a thank you screen
-
-### Kitchen Staff
-1. Open kitchen dashboard (bookmarked URL)
-2. See real-time table status (idle/pinged/serving)
-3. Tables sorted by urgency (ping count)
-4. Tap "Serving" when delivering food
-
 ## API Endpoints
 
+### Public
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/restaurants` | Register new restaurant |
-| GET | `/api/restaurants/{id}/tables` | Get restaurant tables |
+| POST | `/api/enquiries` | Submit restaurant enquiry |
+| POST | `/api/restaurants/{id}/login` | Restaurant owner login |
 | POST | `/api/tables/{qrCode}/scan` | Customer scans QR |
 | POST | `/api/sessions/{id}/ping` | Send ping |
 | POST | `/api/sessions/{id}/serving` | Mark as serving |
 | POST | `/api/sessions/{id}/confirm` | Confirm delivery |
 | POST | `/api/sessions/{id}/reject` | Still waiting |
+
+### Admin (requires `X-Admin-Key` header)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/enquiries?status=PENDING` | List enquiries |
+| POST | `/api/enquiries/{id}/review` | Approve or decline enquiry |
+| GET | `/api/restaurants` | List onboarded restaurants |
+| POST | `/api/restaurants/{id}/reset-password` | Reset restaurant password |
+| POST | `/api/restaurants` | Register restaurant (legacy) |
+| GET | `/api/restaurants/{id}/tables` | Get restaurant tables |
 
 ## Development
 
@@ -118,7 +123,7 @@ packages/
 
 ### Environment Variables
 
-Frontend apps use Vite env vars. Create `.env` files from the examples:
+Frontend apps use Vite env vars. Create `.env` files:
 
 ```bash
 # web-landing
@@ -155,14 +160,9 @@ aws cloudfront create-invalidation --distribution-id E27HLZ7L718G74 --paths "/*"
 
 ### Local Development
 ```bash
-# Kitchen Dashboard
-cd packages/web-kitchen && npm run dev  # http://localhost:3000
-
-# Customer App
-cd packages/web-customer && npm run dev  # http://localhost:3001
-
-# Landing Page
 cd packages/web-landing && npm run dev  # http://localhost:5173
+cd packages/web-kitchen && npm run dev  # http://localhost:3000
+cd packages/web-customer && npm run dev # http://localhost:3001
 ```
 
 ## Infrastructure
@@ -171,8 +171,9 @@ cd packages/web-landing && npm run dev  # http://localhost:5173
 - **CloudFront**: 3 distributions (landing, kitchen, customer)
 - **S3**: Static website hosting
 - **API Gateway**: REST API + WebSocket API (with throttling)
-- **Lambda**: Java 21 handlers (512 MB memory)
-- **DynamoDB**: Tables, Sessions, Connections (encrypted, PITR, TTL)
+- **Lambda**: 15 Java 21 handlers (512 MB memory)
+- **DynamoDB**: 5 tables (encrypted, PITR, RETAIN)
+- **SES**: Transactional emails (credentials, password resets)
 - **ACM**: SSL certificate for *.pingdish.com
 
 ### DynamoDB Tables
@@ -182,6 +183,8 @@ cd packages/web-landing && npm run dev  # http://localhost:5173
 | PingDish-Tables | QrCode | — | Restaurant tables |
 | PingDish-Sessions | SessionId | ExpiresAt (4hr) | Active customer sessions |
 | PingDish-Connections | ConnectionId | ExpiresAt (2hr) | WebSocket connections |
+| PingDish-Enquiries | EnquiryId | — | Contact form submissions |
+| PingDish-Restaurants | RestaurantId | — | Onboarded restaurants + credentials |
 
 ### CloudFront Distributions
 
@@ -198,3 +201,6 @@ cd packages/web-landing && npm run dev  # http://localhost:5173
 | CNAME | www | d239v2muci68mi.cloudfront.net |
 | CNAME | kitchen | dn6lifgiaw8ql.cloudfront.net |
 | CNAME | app | dnuhkplxl5ahm.cloudfront.net |
+| CNAME | w7sxg3tfwilsec7yodi6m4pplilggb5s._domainkey | w7sxg3tfwilsec7yodi6m4pplilggb5s.dkim.amazonses.com |
+| CNAME | vxvctbvo42rcqggdgefziy63kvax3f6x._domainkey | vxvctbvo42rcqggdgefziy63kvax3f6x.dkim.amazonses.com |
+| CNAME | jrtmm4vo33shnetid2ol6o6xs3gj3e63._domainkey | jrtmm4vo33shnetid2ol6o6xs3gj3e63.dkim.amazonses.com |

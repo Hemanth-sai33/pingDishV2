@@ -559,6 +559,270 @@ function StatsBar() {
    LOGIN PAGE — Restaurant owners access their dashboard
    ═══════════════════════════════════════════════════════ */
 
+function AdminPanel({ apiUrl, apiFetch }: { apiUrl: string; apiFetch: (url: string, opts?: RequestInit) => Promise<Response> }) {
+  const [adminKey, setAdminKey] = useState('');
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [tab, setTab] = useState<'enquiries' | 'restaurants'>('enquiries');
+  const [enquiries, setEnquiries] = useState<any[]>([]);
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [filter, setFilter] = useState('PENDING');
+  const [loading, setLoading] = useState(false);
+  const [approveForm, setApproveForm] = useState<{ id: string; restaurantId: string; restaurantName: string; numberOfTables: string } | null>(null);
+  const [msg, setMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const authHeaders = { 'X-Admin-Key': adminKey };
+
+  const loadEnquiries = async (status: string) => {
+    setLoading(true);
+    try {
+      const res = await apiFetch(`${apiUrl}/enquiries?status=${status}`, { headers: authHeaders });
+      const data = await res.json();
+      setEnquiries(data.enquiries || []);
+    } catch { setEnquiries([]); }
+    setLoading(false);
+  };
+
+  const loadRestaurants = async () => {
+    setLoading(true);
+    try {
+      const res = await apiFetch(`${apiUrl}/restaurants`, { headers: authHeaders });
+      const data = await res.json();
+      setRestaurants(data.restaurants || []);
+    } catch { setRestaurants([]); }
+    setLoading(false);
+  };
+
+  const showMsg = (text: string, type: 'success' | 'error') => {
+    setMsg({ text, type });
+    setTimeout(() => setMsg(null), 5000);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoggedIn(true);
+    loadEnquiries('PENDING');
+  };
+
+  const handleApprove = async () => {
+    if (!approveForm) return;
+    const res = await apiFetch(`${apiUrl}/enquiries/${approveForm.id}/review`, {
+      method: 'POST', headers: authHeaders,
+      body: JSON.stringify({ action: 'APPROVE', restaurantId: approveForm.restaurantId, restaurantName: approveForm.restaurantName, numberOfTables: parseInt(approveForm.numberOfTables) }),
+    });
+    const data = await res.json();
+    showMsg(data.success ? `Approved! Credentials sent. Restaurant ID: ${data.restaurantId}` : data.error, data.success ? 'success' : 'error');
+    setApproveForm(null);
+    loadEnquiries(filter);
+  };
+
+  const handleDecline = async (id: string) => {
+    if (!confirm('Decline this enquiry?')) return;
+    const res = await apiFetch(`${apiUrl}/enquiries/${id}/review`, {
+      method: 'POST', headers: authHeaders,
+      body: JSON.stringify({ action: 'DECLINE' }),
+    });
+    const data = await res.json();
+    showMsg(data.success ? 'Enquiry declined' : data.error, data.success ? 'success' : 'error');
+    loadEnquiries(filter);
+  };
+
+  const handleResetPassword = async (restaurantId: string) => {
+    if (!confirm(`Reset password for ${restaurantId}?`)) return;
+    const res = await apiFetch(`${apiUrl}/restaurants/${restaurantId}/reset-password`, { method: 'POST', headers: authHeaders });
+    const data = await res.json();
+    showMsg(data.success ? `Password reset — email sent to ${data.emailSentTo}` : data.error, data.success ? 'success' : 'error');
+  };
+
+  if (!loggedIn) {
+    return (
+      <div className="min-h-screen bg-[#080e1a] flex items-center justify-center p-4">
+        <form onSubmit={handleLogin} className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-white">PingDish Admin</h1>
+            <p className="text-gray-500 text-sm mt-1">Enter your admin key to continue</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <input type="password" value={adminKey} onChange={e => setAdminKey(e.target.value)} required autoFocus
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white mb-4 focus:border-orange-500 focus:outline-none transition-colors" placeholder="Admin secret key" />
+            <button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors">Sign In</button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#080e1a] text-white">
+      {/* Header */}
+      <header className="border-b border-white/5 bg-[#0a1120]">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center">
+              <Bell className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-lg font-bold">PingDish Admin</span>
+          </div>
+          <a href="/" className="text-gray-500 hover:text-white text-sm transition-colors">← Back to site</a>
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Toast */}
+        {msg && (
+          <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 ${msg.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+            {msg.type === 'success' ? '✓' : '✕'} {msg.text}
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex gap-1 bg-white/5 rounded-xl p-1 mb-8 w-fit">
+          <button onClick={() => { setTab('enquiries'); loadEnquiries(filter); }}
+            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === 'enquiries' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-white'}`}>
+            Enquiries
+          </button>
+          <button onClick={() => { setTab('restaurants'); loadRestaurants(); }}
+            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === 'restaurants' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-white'}`}>
+            Restaurants
+          </button>
+        </div>
+
+        {/* Enquiries Tab */}
+        {tab === 'enquiries' && (
+          <>
+            <div className="flex items-center gap-2 mb-6">
+              {['PENDING', 'APPROVED', 'DECLINED'].map(s => (
+                <button key={s} onClick={() => { setFilter(s); loadEnquiries(s); }}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide transition-colors ${filter === s ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+
+            {loading ? (
+              <div className="text-center py-16 text-gray-500">Loading...</div>
+            ) : enquiries.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-gray-500">No {filter.toLowerCase()} enquiries</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {enquiries.map(eq => (
+                  <div key={eq.EnquiryId} className="bg-white/[0.03] border border-white/5 rounded-xl p-5 hover:border-white/10 transition-colors">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold text-white">{eq.Company}</h3>
+                        <p className="text-gray-500 text-sm">{eq.Name} · {eq.Email}</p>
+                      </div>
+                      <span className="text-gray-600 text-xs">{eq.CreatedAt?.slice(0, 10)}</span>
+                    </div>
+                    {eq.Tables && <p className="text-gray-500 text-xs mb-1">📍 Locations: {eq.Tables}</p>}
+                    {eq.Message && <p className="text-gray-400 text-sm mt-2 bg-white/[0.02] rounded-lg p-3 italic">"{eq.Message}"</p>}
+                    {filter === 'PENDING' && (
+                      <div className="flex gap-2 mt-4 pt-4 border-t border-white/5">
+                        <button onClick={() => setApproveForm({ id: eq.EnquiryId, restaurantId: eq.Company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), restaurantName: eq.Company, numberOfTables: eq.Tables || '10' })}
+                          className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 px-5 py-2 rounded-lg text-sm font-medium transition-colors">✓ Approve</button>
+                        <button onClick={() => handleDecline(eq.EnquiryId)}
+                          className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-5 py-2 rounded-lg text-sm font-medium transition-colors">✕ Decline</button>
+                      </div>
+                    )}
+                    {filter === 'APPROVED' && eq.RestaurantId && (
+                      <p className="text-green-400/70 text-xs mt-3 pt-3 border-t border-white/5">Restaurant ID: <span className="font-mono">{eq.RestaurantId}</span></p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Restaurants Tab */}
+        {tab === 'restaurants' && (
+          <>
+            {loading ? (
+              <div className="text-center py-16 text-gray-500">Loading...</div>
+            ) : restaurants.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-gray-500">No restaurants onboarded yet</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/5 text-left text-gray-500 text-xs uppercase tracking-wider">
+                      <th className="pb-3 pr-4">Restaurant</th>
+                      <th className="pb-3 pr-4">Owner</th>
+                      <th className="pb-3 pr-4">Email</th>
+                      <th className="pb-3 pr-4">Tables</th>
+                      <th className="pb-3 pr-4">Status</th>
+                      <th className="pb-3 pr-4">Created</th>
+                      <th className="pb-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {restaurants.map(r => (
+                      <tr key={r.RestaurantId} className="border-b border-white/5 hover:bg-white/[0.02]">
+                        <td className="py-4 pr-4">
+                          <div className="font-medium text-white">{r.RestaurantName}</div>
+                          <div className="text-gray-600 text-xs font-mono">{r.RestaurantId}</div>
+                        </td>
+                        <td className="py-4 pr-4 text-gray-400">{r.OwnerName}</td>
+                        <td className="py-4 pr-4 text-gray-400">{r.OwnerEmail}</td>
+                        <td className="py-4 pr-4 text-gray-400">{r.NumberOfTables}</td>
+                        <td className="py-4 pr-4">
+                          <span className={`px-2 py-1 rounded-md text-xs font-medium ${r.Status === 'ACTIVE' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>{r.Status}</span>
+                        </td>
+                        <td className="py-4 pr-4 text-gray-500 text-xs">{r.CreatedAt?.slice(0, 10)}</td>
+                        <td className="py-4">
+                          <button onClick={() => handleResetPassword(r.RestaurantId)}
+                            className="text-orange-400 hover:text-orange-300 text-xs font-medium transition-colors">Reset Password</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Approve Modal */}
+        {approveForm && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-[#0d1526] border border-white/10 rounded-2xl p-8 w-full max-w-md shadow-2xl">
+              <h3 className="font-bold text-xl mb-1">Approve Restaurant</h3>
+              <p className="text-gray-500 text-sm mb-6">Password will be auto-generated and emailed to the owner.</p>
+              <div className="space-y-4 mb-8">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">Restaurant ID (URL slug)</label>
+                  <input value={approveForm.restaurantId} onChange={e => setApproveForm({ ...approveForm, restaurantId: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-sm focus:border-orange-500 focus:outline-none transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">Restaurant Name</label>
+                  <input value={approveForm.restaurantName} onChange={e => setApproveForm({ ...approveForm, restaurantName: e.target.value })}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:border-orange-500 focus:outline-none transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">Number of Tables</label>
+                  <input type="number" value={approveForm.numberOfTables} onChange={e => setApproveForm({ ...approveForm, numberOfTables: e.target.value })} min="1"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:border-orange-500 focus:outline-none transition-colors" />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setApproveForm(null)} className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl text-sm font-medium transition-colors">Cancel</button>
+                <button onClick={handleApprove} className="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-xl text-sm font-semibold transition-colors">Approve & Send Credentials</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function LoginPage() {
   const [loginForm, setLoginForm] = useState({ restaurantId: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -746,13 +1010,15 @@ function App() {
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [isAdminRoute, setIsAdminRoute] = useState(false);
   const [isLoginRoute, setIsLoginRoute] = useState(false);
+  const [isAdminPanel, setIsAdminPanel] = useState(false);
 
-  // Hash-based routing: #admin-register (admin only) and #login (restaurant owners)
+  // Hash-based routing: #admin-register (admin only), #login (restaurant owners), #admin (admin panel)
   useEffect(() => {
     const checkRoute = () => {
       const hash = window.location.hash;
       setIsAdminRoute(hash === '#admin-register');
       setIsLoginRoute(hash === '#login');
+      setIsAdminPanel(hash === '#admin');
     };
     checkRoute();
     window.addEventListener('hashchange', checkRoute);
@@ -800,6 +1066,11 @@ function App() {
       setIsSubmitting(false);
     }
   };
+
+  // Admin panel — full-screen route for PingDish admins
+  if (isAdminPanel) {
+    return <AdminPanel apiUrl={API_URL} apiFetch={apiFetch} />;
+  }
 
   // Login page — full-screen route for restaurant owners
   if (isLoginRoute) {
@@ -1268,8 +1539,14 @@ function App() {
                   </div>
 
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
+                      try {
+                        await apiFetch(`${API_URL}/enquiries`, {
+                          method: 'POST',
+                          body: JSON.stringify(contactForm),
+                        });
+                      } catch {}
                       setContactSubmitted(true);
                     }}
                     className="space-y-4"
