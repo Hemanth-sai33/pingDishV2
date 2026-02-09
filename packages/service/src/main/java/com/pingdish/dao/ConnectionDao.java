@@ -32,6 +32,10 @@ public class ConnectionDao {
         if (conn.sessionId() != null) {
             item.put("SessionId", AttributeValue.builder().s(conn.sessionId()).build());
         }
+        // [FIX 6.3] Store TTL for auto-expiry
+        if (conn.expiresAt() > 0) {
+            item.put("ExpiresAt", AttributeValue.builder().n(String.valueOf(conn.expiresAt())).build());
+        }
         client.putItem(PutItemRequest.builder().tableName(TABLE_NAME).item(item).build());
     }
 

@@ -46,6 +46,14 @@ const App: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       const qrCode = getQrCode();
+
+      // If this tab already saw a closed session, don't create a new one
+      if (sessionStorage.getItem(`pingdish_closed_${qrCode}`)) {
+        setSession({ sessionId: '', tableId: '', tableNumber: 0, status: 'CLOSED', pingStatus: 'IDLE', pingCount: 0, createdAt: 0 } as Session);
+        setLoading(false);
+        return;
+      }
+
       try {
         const sess = await scanTable(qrCode);
         setSession(sess);
@@ -88,12 +96,11 @@ const App: React.FC = () => {
           } else if (msg.event === 'SERVING') {
             setShowServingNotification(true);
             setSession(prev => prev ? { ...prev, pingStatus: 'SERVING' } : null);
-          } else if (msg.event === 'CONFIRMED') {
+          } else if (msg.event === 'CONFIRMED' || msg.event === 'SESSION_CLOSED') {
             setShowServingNotification(false);
             setShowConfirmDialog(false);
             setPings([]);
-            setSession(prev => prev ? { ...prev, pingStatus: 'IDLE', pingCount: 0 } : null);
-          } else if (msg.event === 'SESSION_CLOSED') {
+            sessionStorage.setItem(`pingdish_closed_${getQrCode()}`, '1');
             setSession(prev => prev ? { ...prev, status: 'CLOSED' } : null);
           }
         });
@@ -139,8 +146,9 @@ const App: React.FC = () => {
     try {
       await confirmFood(session.sessionId);
       setShowServingNotification(false);
-      setPings([]); // Clear history
-      setSession({ ...session, pingStatus: 'IDLE', pingCount: 0 });
+      setPings([]);
+      sessionStorage.setItem(`pingdish_closed_${getQrCode()}`, '1');
+      setSession({ ...session, status: 'CLOSED' });
     } catch (e) {
       console.error("Confirm failed:", e);
     }
@@ -175,6 +183,20 @@ const App: React.FC = () => {
         <div className="text-center">
           <h1 className="text-xl font-bold text-gray-800 mb-2">Invalid QR Code</h1>
           <p className="text-gray-500">Please scan a valid table QR code</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (session.status === 'CLOSED') {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Utensils size={32} className="text-green-600" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-800 mb-2">Thank you for using PingDish!</h1>
+          <p className="text-gray-500 mb-6">Your order has been served to your table. We'd love to hear your feedback!</p>
         </div>
       </div>
     );

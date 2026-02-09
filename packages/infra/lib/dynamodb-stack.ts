@@ -19,7 +19,9 @@ export class DynamoDbStack extends cdk.Stack {
       tableName: 'PingDish-Tables',
       partitionKey: { name: 'QrCode', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,                   // [FIX 6.6] Don't destroy production data
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,           // [FIX 6.6] Explicit encryption
+      pointInTimeRecovery: true,                                  // [FIX 6.6] Enable PITR
     });
 
     // Sessions: PK = SessionId, GSI for active session lookup by restaurant+table
@@ -27,7 +29,10 @@ export class DynamoDbStack extends cdk.Stack {
       tableName: 'PingDish-Sessions',
       partitionKey: { name: 'SessionId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      pointInTimeRecovery: true,
+      timeToLiveAttribute: 'ExpiresAt',                           // [FIX 6.3] Auto-expire sessions
     });
     this.sessionsTable.addGlobalSecondaryIndex({
       indexName: 'RestaurantTable-Status-Index',
@@ -40,7 +45,10 @@ export class DynamoDbStack extends cdk.Stack {
       tableName: 'PingDish-Connections',
       partitionKey: { name: 'ConnectionId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      pointInTimeRecovery: true,
+      timeToLiveAttribute: 'ExpiresAt',                           // [FIX 6.3] Auto-expire stale connections
     });
   }
 }

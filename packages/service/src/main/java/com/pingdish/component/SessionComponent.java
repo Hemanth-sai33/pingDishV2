@@ -6,6 +6,7 @@ import com.pingdish.dao.TableDao;
 import com.pingdish.model.*;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.UUID;
 
@@ -50,6 +51,11 @@ public class SessionComponent {
                     .createdAt(nowUtc())
                     .build();
             sessionDao.createSession(session);
+            // [FIX 6.3] Set TTL — sessions expire after 4 hours
+            long expiresAt = Instant.now().plus(4, ChronoUnit.HOURS).getEpochSecond();
+            sessionDao.updateSession(session.sessionId(), Map.of(
+                    "ExpiresAt", AttributeValue.builder().n(String.valueOf(expiresAt)).build()
+            ));
         }
         return session;
     }
@@ -120,6 +126,7 @@ public class SessionComponent {
         if (session == null || session.status() != SessionStatus.ACTIVE) return false;
 
         sessionDao.updateSession(sessionId, Map.of(
+                "Status", AttributeValue.builder().s(SessionStatus.CLOSED.name()).build(),
                 "PingStatus", AttributeValue.builder().s(PingStatus.IDLE.name()).build(),
                 "PingCount", AttributeValue.builder().n("0").build(),
                 "LastConfirmedAt", AttributeValue.builder().s(nowUtc()).build()

@@ -16,27 +16,33 @@ export interface WSMessage {
   sessionId: string;
 }
 
+// [FIX 6.1] Shared fetch wrapper with CSRF custom header
+const apiFetch = (url: string, options: RequestInit = {}) =>
+  fetch(url, {
+    ...options,
+    headers: { ...options.headers as Record<string, string>, 'Content-Type': 'application/json', 'X-Requested-With': 'PingDish' },
+  });
+
 export const scanTable = async (qrCode: string): Promise<Session> => {
-  const res = await fetch(`${API_BASE}/api/tables/${qrCode}/scan`, { method: 'POST' });
+  const res = await apiFetch(`${API_BASE}/api/tables/${qrCode}/scan`, { method: 'POST' });
   return res.json();
 };
 
 export const pingKitchen = async (sessionId: string) => {
-  const res = await fetch(`${API_BASE}/api/sessions/${sessionId}/ping`, { method: 'POST' });
+  const res = await apiFetch(`${API_BASE}/api/sessions/${sessionId}/ping`, { method: 'POST' });
   return res.json();
 };
 
 export const confirmFood = async (sessionId: string, auto = false) => {
-  const res = await fetch(`${API_BASE}/api/sessions/${sessionId}/confirm`, {
+  const res = await apiFetch(`${API_BASE}/api/sessions/${sessionId}/confirm`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ auto }),
   });
   return res.json();
 };
 
 export const rejectServing = async (sessionId: string) => {
-  const res = await fetch(`${API_BASE}/api/sessions/${sessionId}/reject`, { method: 'POST' });
+  const res = await apiFetch(`${API_BASE}/api/sessions/${sessionId}/reject`, { method: 'POST' });
   return res.json();
 };
 

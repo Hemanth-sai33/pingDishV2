@@ -4,9 +4,11 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.pingdish.util.ErrorHandler;
+import com.pingdish.util.InputValidator;
+import com.pingdish.util.ResponseHelper;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
@@ -16,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 public class RegisterRestaurantActivity implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-    private static final Gson GSON = new Gson();
     private static final String TABLE_NAME = "PingDish-Tables";
     private final DynamoDbClient dynamoDbClient;
 
@@ -29,14 +30,15 @@ public class RegisterRestaurantActivity implements RequestHandler<APIGatewayProx
         try {
             JsonObject body = JsonParser.parseString(event.getBody()).getAsJsonObject();
             String restaurantId = body.get("restaurantId").getAsString();
+            String restaurantName = body.has("restaurantName") ? body.get("restaurantName").getAsString() : "";
+            String ownerEmail = body.has("ownerEmail") ? body.get("ownerEmail").getAsString() : "";
             int numberOfTables = body.get("numberOfTables").getAsInt();
 
-            if (!restaurantId.matches("^[a-z0-9-]+$")) {
-                return response(400, Map.of("error", "restaurantId must be lowercase alphanumeric with hyphens"));
-            }
-            if (numberOfTables < 1 || numberOfTables > 500) {
-                return response(400, Map.of("error", "numberOfTables must be between 1 and 500"));
-            }
+            // [FIX 6.4] Comprehensive server-side validation
+            InputValidator.validateRestaurantId(restaurantId);
+            InputValidator.validateRestaurantName(restaurantName);
+            InputValidator.validateEmail(ownerEmail);
+            InputValidator.validateNumberOfTables(numberOfTables);
 
             List<Map<String, Object>> tables = new ArrayList<>();
             for (int i = 1; i <= numberOfTables; i++) {
@@ -51,20 +53,17 @@ public class RegisterRestaurantActivity implements RequestHandler<APIGatewayProx
                 tables.add(Map.of("tableNumber", i, "qrUrl", "https://app.pingdish.com/" + restaurantId + "/" + i));
             }
 
-            return response(200, Map.of(
+            return ResponseHelper.respond(200, Map.of(
                 "success", true,
                 "kitchenUrl", "https://kitchen.pingdish.com/" + restaurantId,
                 "tables", tables
-            ));
+            ), event);
+        } catch (IllegalArgumentException e) {
+            // [FIX 5.4] Return validation error without internal details
+            return ResponseHelper.respond(400, Map.of("error", e.getMessage()), event);
         } catch (Exception e) {
-            return response(500, Map.of("error", e.getMessage()));
+            // [FIX 5.4] Centralized error handling — no raw e.getMessage()
+            return ErrorHandler.handle(e, event);
         }
-    }
-
-    private APIGatewayProxyResponseEvent response(int statusCode, Object body) {
-        return new APIGatewayProxyResponseEvent()
-                .withStatusCode(statusCode)
-                .withHeaders(Map.of("Access-Control-Allow-Origin", "*", "Content-Type", "application/json"))
-                .withBody(GSON.toJson(body));
     }
 }

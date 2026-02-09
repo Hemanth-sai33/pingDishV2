@@ -23,6 +23,13 @@ export const connectWebSocket = (onMessage: (msg: WSMessage) => void) => {
   };
 };
 
+// [FIX 6.1] Add CSRF custom header
+const apiFetch = (url: string, options: RequestInit = {}) =>
+  fetch(url, {
+    ...options,
+    headers: { ...options.headers as Record<string, string>, 'Content-Type': 'application/json', 'X-Requested-With': 'PingDish' },
+  });
+
 export const markServing = async (sessionId: string) => {
-  await fetch(`${API_URL}/sessions/${sessionId}/serving`, { method: 'POST' });
+  await apiFetch(`${API_URL}/sessions/${sessionId}/serving`, { method: 'POST' });
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bell, QrCode, Zap, Clock, Check, Download, ExternalLink } from 'lucide-react';
+import { escapeHtml, isValidKitchenUrl } from './utils/security';
 
 interface FormData {
   restaurantName: string;
@@ -15,16 +16,19 @@ interface SubmissionResult {
   tables: TableInfo[];
 }
 
-const API_URL = 'https://7fqrf6dfl6.execute-api.ap-south-2.amazonaws.com/prod/api';
+// [FIX 5.1] Use environment variables instead of hardcoded URLs
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5173/api';
 
 // Generate QR code URL using QR Server API (free, no API key needed)
+// TODO [FIX 7.2]: Replace with client-side qrcode library (npm install qrcode)
 const getQrCodeUrl = (url: string, size = 200) => 
   `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`;
 
-// Download all QR codes as printable HTML
+// [FIX 4.4] Download all QR codes as printable HTML — with XSS-safe escaping
 const downloadQrCodes = (tables: TableInfo[], restaurantName: string) => {
+  const safeName = escapeHtml(restaurantName);
   const html = `<!DOCTYPE html>
-<html><head><title>QR Codes - ${restaurantName}</title>
+<html><head><title>QR Codes - ${safeName}</title>
 <style>
   body { font-family: Arial, sans-serif; }
   .qr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px; }
@@ -34,13 +38,17 @@ const downloadQrCodes = (tables: TableInfo[], restaurantName: string) => {
   .qr-card p { margin: 0; font-size: 11px; color: #666; }
   @media print { .qr-grid { grid-template-columns: repeat(3, 1fr); } }
 </style></head><body>
-<h1 style="text-align:center;margin-bottom:20px;">${restaurantName} - Table QR Codes</h1>
+<h1 style="text-align:center;margin-bottom:20px;">${safeName} - Table QR Codes</h1>
 <div class="qr-grid">
-${tables.map(t => `<div class="qr-card">
-  <img src="${getQrCodeUrl(t.qrUrl, 150)}" alt="Table ${t.tableNumber}"/>
-  <h3>Table ${t.tableNumber}</h3>
+${tables.map(t => {
+    const safeTableNum = escapeHtml(String(t.tableNumber));
+    const safeUrl = encodeURI(getQrCodeUrl(t.qrUrl, 150));
+    return `<div class="qr-card">
+  <img src="${safeUrl}" alt="Table ${safeTableNum}"/>
+  <h3>Table ${safeTableNum}</h3>
   <p>Scan to ping kitchen</p>
-</div>`).join('')}
+</div>`;
+  }).join('')}
 </div>
 <script>window.print();</script>
 </body></html>`;
@@ -49,6 +57,13 @@ ${tables.map(t => `<div class="qr-card">
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank');
 };
+
+// [FIX 6.1] Shared fetch wrapper with CSRF custom header
+const apiFetch = (url: string, options: RequestInit = {}) =>
+  fetch(url, {
+    ...options,
+    headers: { ...options.headers as Record<string, string>, 'Content-Type': 'application/json', 'X-Requested-With': 'PingDish' },
+  });
 
 function App() {
   const [formData, setFormData] = useState<FormData>({ restaurantName: '', restaurantId: '', numberOfTables: '', ownerEmail: '' });
@@ -70,9 +85,8 @@ function App() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/restaurants`, {
+      const res = await apiFetch(`${API_URL}/restaurants`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, numberOfTables: parseInt(formData.numberOfTables, 10) })
       });
       const data = await res.json();
@@ -108,10 +122,15 @@ function App() {
               <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center gap-2">
                 <ExternalLink className="w-5 h-5 text-orange-600" /> Kitchen Dashboard
               </h3>
-              <a href={result.kitchenUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-block bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700">
-                Open Dashboard →
-              </a>
+              {/* [FIX 4.5] Validate kitchen URL before rendering as link */}
+              {isValidKitchenUrl(result.kitchenUrl) ? (
+                <a href={result.kitchenUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-block bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700">
+                  Open Dashboard →
+                </a>
+              ) : (
+                <p className="text-red-600 font-semibold">Invalid dashboard URL received. Please contact support.</p>
+              )}
               <p className="text-sm text-slate-500 mt-2 font-mono">{result.kitchenUrl}</p>
             </div>
             <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-6">
@@ -181,12 +200,12 @@ function App() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">Restaurant Name *</label>
-              <input type="text" name="restaurantName" value={formData.restaurantName} onChange={handleInputChange} required
+              <input type="text" name="restaurantName" value={formData.restaurantName} onChange={handleInputChange} required maxLength={100}
                 className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-orange-600 focus:outline-none" placeholder="The Cozy Bistro" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">Restaurant ID (URL slug) *</label>
-              <input type="text" name="restaurantId" value={formData.restaurantId} onChange={handleInputChange} required pattern="[a-z0-9-]+"
+              <input type="text" name="restaurantId" value={formData.restaurantId} onChange={handleInputChange} required pattern="[a-z0-9\-]+" minLength={3} maxLength={50}
                 className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-orange-600 focus:outline-none font-mono text-sm" placeholder="the-cozy-bistro" />
               <p className="text-xs text-slate-500 mt-1">Lowercase letters, numbers, and hyphens only</p>
             </div>

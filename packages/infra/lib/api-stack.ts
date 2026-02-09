@@ -21,13 +21,34 @@ export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
 
+    // [FIX 4.2] Restrict CORS to PingDish domains only
+    const allowedOrigins = [
+      'https://www.pingdish.com',
+      'https://kitchen.pingdish.com',
+      'https://app.pingdish.com',
+    ];
+    // Add localhost for dev
+    if (process.env.STAGE === 'dev') {
+      allowedOrigins.push('http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173');
+    }
+
     const restApi = new apigateway.RestApi(this, 'RestApi', {
       restApiName: 'PingDish-API',
       defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowOrigins: allowedOrigins,
+        allowMethods: ['GET', 'POST', 'OPTIONS'],
+        allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+        allowCredentials: true,
       },
     });
+
+    // [FIX 5.2] Add API Gateway throttling
+    const plan = restApi.addUsagePlan('PingDishThrottlePlan', {
+      name: 'ThrottlePlan',
+      throttle: { rateLimit: 50, burstLimit: 100 },
+      quota: { limit: 10000, period: apigateway.Period.DAY },
+    });
+    plan.addApiStage({ stage: restApi.deploymentStage });
 
     const api = restApi.root.addResource('api');
     

@@ -9,6 +9,8 @@ import com.google.inject.Inject;
 import com.pingdish.component.SessionComponent;
 import com.pingdish.config.ServiceInjector;
 import com.pingdish.model.request.ConfirmRequest;
+import com.pingdish.util.ErrorHandler;
+import com.pingdish.util.ResponseHelper;
 import java.util.Map;
 
 public class ConfirmDeliveryActivity implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -26,21 +28,18 @@ public class ConfirmDeliveryActivity implements RequestHandler<APIGatewayProxyRe
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
-        String sessionId = event.getPathParameters().get("sessionId");
-        ConfirmRequest req = GSON.fromJson(event.getBody(), ConfirmRequest.class);
-        boolean auto = req != null && req.auto();
+        try {
+            String sessionId = event.getPathParameters().get("sessionId");
+            ConfirmRequest req = GSON.fromJson(event.getBody(), ConfirmRequest.class);
+            boolean auto = req != null && req.auto();
 
-        boolean success = sessionComponent.confirmDelivery(sessionId, auto);
-        if (!success) {
-            return response(404, Map.of("error", "Session not found"));
+            boolean success = sessionComponent.confirmDelivery(sessionId, auto);
+            if (!success) {
+                return ResponseHelper.respond(404, Map.of("error", "Session not found"), event);
+            }
+            return ResponseHelper.respond(200, Map.of("success", true), event);
+        } catch (Exception e) {
+            return ErrorHandler.handle(e, event);
         }
-        return response(200, Map.of("success", true));
-    }
-
-    private APIGatewayProxyResponseEvent response(int statusCode, Object body) {
-        return new APIGatewayProxyResponseEvent()
-                .withStatusCode(statusCode)
-                .withHeaders(Map.of("Access-Control-Allow-Origin", "*"))
-                .withBody(GSON.toJson(body));
     }
 }
