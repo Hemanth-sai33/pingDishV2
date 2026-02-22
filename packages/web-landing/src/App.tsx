@@ -471,8 +471,8 @@ function HeroAnimation() {
   const sceneLabels = ['Customer Pings', 'Kitchen Receives', 'Dish Delivered'];
 
   return (
-    <div className="relative flex items-center justify-center animate-slide-in-right mx-auto max-w-[280px] sm:max-w-sm lg:max-w-md">
-      <div className="relative w-full">
+    <div className="relative flex items-center justify-center animate-slide-in-right max-w-[280px] sm:max-w-sm lg:max-w-none mx-auto lg:mx-0">
+      <div className="relative w-full lg:max-w-md">
         {/* Phone frame */}
         <div className="relative bg-navy-800 rounded-[2.5rem] p-3 shadow-2xl shadow-primary-500/10 border border-white/10">
           <div className="bg-navy-900 rounded-[2rem] min-h-[460px] relative overflow-hidden">
