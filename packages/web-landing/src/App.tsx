@@ -471,8 +471,8 @@ function HeroAnimation() {
   const sceneLabels = ['Customer Pings', 'Kitchen Receives', 'Dish Delivered'];
 
   return (
-    <div className="relative hidden lg:flex items-center justify-center animate-slide-in-right">
-      <div className="relative w-full max-w-md">
+    <div className="relative flex items-center justify-center animate-slide-in-right mx-auto max-w-[280px] sm:max-w-sm lg:max-w-md">
+      <div className="relative w-full">
         {/* Phone frame */}
         <div className="relative bg-navy-800 rounded-[2.5rem] p-3 shadow-2xl shadow-primary-500/10 border border-white/10">
           <div className="bg-navy-900 rounded-[2rem] min-h-[460px] relative overflow-hidden">
@@ -498,8 +498,10 @@ function HeroAnimation() {
           {sceneLabels[scene]}
         </p>
 
-        {/* Floating contextual cards */}
-        {renderFloatingCards()}
+        {/* Floating contextual cards — hidden on small screens to prevent overflow */}
+        <div className="hidden sm:block">
+          {renderFloatingCards()}
+        </div>
       </div>
     </div>
   );
@@ -530,9 +532,9 @@ function StatCard({ end, suffix, prefix, label, icon, duration = 2000, decimals 
   };
 
   return (
-    <div ref={ref} className="glass-card rounded-2xl p-6 text-center stat-shimmer">
+    <div ref={ref} className="glass-card rounded-2xl p-4 sm:p-6 text-center stat-shimmer">
       <div className="text-primary-500 mb-2 flex justify-center">{icon}</div>
-      <div className="text-3xl md:text-4xl font-extrabold text-white mb-1 tabular-nums">
+      <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-1 tabular-nums">
         {prefix || ''}{hasAnimated ? formatDisplay(displayValue) : (decimals > 0 ? '0.' + '0'.repeat(decimals) : '0')}{suffix || ''}
       </div>
       <div className="text-gray-500 text-sm font-medium">{label}</div>
@@ -617,12 +619,12 @@ function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="glass-card rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl">
+        <div className="glass-card rounded-3xl p-5 sm:p-8 md:p-10 border border-white/10 shadow-2xl">
           <div className="text-center mb-8">
             <div className="w-14 h-14 bg-primary-500/10 border border-primary-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <LogIn className="w-7 h-7 text-primary-500" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">Welcome back</h1>
             <p className="text-gray-500 text-sm">Sign in to access your kitchen dashboard</p>
           </div>
 
@@ -681,7 +683,7 @@ function LoginPage() {
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-base sm:text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoggingIn ? (
                 <span className="flex items-center justify-center gap-2">
@@ -921,8 +923,8 @@ function App() {
       {/* ─── HERO SECTION ─── */}
       <section className="hero-gradient min-h-screen flex items-center pt-20 relative">
         <div className="grid-pattern absolute inset-0 z-0" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 w-full">
+          <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-center">
             {/* Left - Text */}
             <div className="animate-fade-in-up">
               <div className="inline-flex items-center gap-2 bg-primary-500/10 border border-primary-500/20 rounded-full px-4 py-1.5 mb-6">
@@ -930,7 +932,7 @@ function App() {
                 <span className="text-primary-400 text-xs font-medium tracking-wide uppercase">Now Live</span>
               </div>
 
-              <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-[1.05] mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white leading-[1.05] mb-6">
                 Register your{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
                   restaurant
@@ -938,7 +940,7 @@ function App() {
                 now!
               </h1>
 
-              <p className="text-lg md:text-xl text-gray-400 leading-relaxed mb-10 max-w-lg">
+              <p className="text-base sm:text-lg md:text-xl text-gray-400 leading-relaxed mb-10 max-w-lg">
                 With PingDish, any restaurant can upgrade table service instantly. Just scan, ping, and serve. It's that easy.
               </p>
 
@@ -946,13 +948,13 @@ function App() {
               <div className="flex flex-col sm:flex-row items-start gap-4 max-w-md">
                 <a
                   href="#contact-sales"
-                  className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 flex items-center gap-2"
+                  className="bg-primary-500 hover:bg-primary-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 flex items-center gap-2"
                 >
                   Get Started <ArrowRight className="w-5 h-5" />
                 </a>
                 <a
                   href="#how-it-works"
-                  className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all flex items-center gap-2"
+                  className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all flex items-center gap-2"
                 >
                   See How It Works
                 </a>
@@ -978,14 +980,14 @@ function App() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">Features</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
               Everything you need to{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
                 level up
               </span>{' '}
               service
             </h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto">
               PingDish gives your restaurant real-time communication between tables and kitchen, with zero friction.
             </p>
           </div>
@@ -1017,8 +1019,8 @@ function App() {
                 color: 'from-emerald-500/20 to-emerald-600/5',
               },
             ].map((feature, i) => (
-              <div key={i} className="feature-card glass-card rounded-2xl p-7 group cursor-default">
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white mb-5 group-hover:scale-110 transition-transform`}>
+              <div key={i} className="feature-card glass-card rounded-2xl p-5 sm:p-6 md:p-7 group cursor-default">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white mb-5 group-hover:scale-110 transition-transform`}>
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
@@ -1035,18 +1037,18 @@ function App() {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
             <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">How It Works</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
               Set up in{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
                 3 simple steps
               </span>
             </h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto">
               From sign-up to first ping in under 2 minutes. No technical knowledge needed.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
             {[
               {
                 step: '01',
@@ -1068,9 +1070,9 @@ function App() {
               },
             ].map((step, i) => (
               <div key={i} className="relative group">
-                <div className="glass-card rounded-2xl p-8 h-full hover:border-primary-500/20 transition-all">
-                  <div className="text-6xl font-black text-white/5 absolute top-4 right-6">{step.step}</div>
-                  <div className="w-14 h-14 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 mb-5">
+                <div className="glass-card rounded-2xl p-5 sm:p-6 md:p-8 h-full hover:border-primary-500/20 transition-all">
+                  <div className="text-4xl sm:text-5xl md:text-6xl font-black text-white/5 absolute top-4 right-6">{step.step}</div>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 mb-5">
                     {step.icon}
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
@@ -1093,27 +1095,27 @@ function App() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">Pricing</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
               Plans that{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
                 scale with you
               </span>
             </h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto">
               Start free, upgrade when you need more. Enterprise solutions for restaurant chains and franchises.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto">
             {/* ── Free Plan ── */}
-            <div className="relative bg-gradient-to-br from-navy-800 to-navy-900 rounded-3xl p-8 border border-white/10 shadow-xl">
+            <div className="relative bg-gradient-to-br from-navy-800 to-navy-900 rounded-3xl p-5 sm:p-6 md:p-8 border border-white/10 shadow-xl">
               <div className="mb-6">
                 <h3 className="text-lg font-bold text-white mb-1">Starter</h3>
                 <p className="text-gray-500 text-sm">Perfect for single-location restaurants</p>
               </div>
 
               <div className="mb-6">
-                <div className="text-5xl font-black text-white mb-1">$0<span className="text-lg font-medium text-gray-500">/mo</span></div>
+                <div className="text-4xl sm:text-5xl font-black text-white mb-1">$0<span className="text-lg font-medium text-gray-500">/mo</span></div>
                 <p className="text-gray-500 text-sm">Free forever</p>
               </div>
 
@@ -1135,13 +1137,13 @@ function App() {
                 ))}
               </div>
 
-              <a href="#contact-sales" className="block w-full bg-white/10 hover:bg-white/15 text-white text-center py-4 rounded-xl font-semibold text-lg transition-all border border-white/10">
+              <a href="#contact-sales" className="block w-full bg-white/10 hover:bg-white/15 text-white text-center py-4 rounded-xl font-semibold text-base sm:text-lg transition-all border border-white/10">
                 Get Started Free <ArrowRight className="w-4 h-4 inline ml-1" />
               </a>
             </div>
 
             {/* ── Enterprise Plan ── */}
-            <div className="relative bg-gradient-to-br from-navy-800 to-navy-900 rounded-3xl p-8 border border-primary-500/20 shadow-2xl shadow-primary-500/5">
+            <div className="relative bg-gradient-to-br from-navy-800 to-navy-900 rounded-3xl p-5 sm:p-6 md:p-8 border border-primary-500/20 shadow-2xl shadow-primary-500/5">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <span className="bg-primary-500 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
                   Most Popular
@@ -1157,7 +1159,7 @@ function App() {
               </div>
 
               <div className="mb-6">
-                <div className="text-4xl font-black text-white mb-1">Custom</div>
+                <div className="text-3xl sm:text-4xl font-black text-white mb-1">Custom</div>
                 <p className="text-gray-500 text-sm">Tailored to your scale</p>
               </div>
 
@@ -1181,7 +1183,7 @@ function App() {
                 ))}
               </div>
 
-              <a href="#contact-sales" className="block w-full bg-primary-500 hover:bg-primary-600 text-white text-center py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25">
+              <a href="#contact-sales" className="block w-full bg-primary-500 hover:bg-primary-600 text-white text-center py-4 rounded-xl font-semibold text-base sm:text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25">
                 Talk to Sales <ArrowRight className="w-4 h-4 inline ml-1" />
               </a>
             </div>
@@ -1193,18 +1195,18 @@ function App() {
       <section id="contact-sales" className="bg-navy-900 py-24 relative overflow-hidden">
         <div className="grid-pattern absolute inset-0 z-0 opacity-30" />
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-start">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
             {/* Left — Info */}
             <div>
               <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">Contact Sales</span>
-              <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-3 mb-6">
                 Let's find the{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
                   right plan
                 </span>{' '}
                 for you
               </h2>
-              <p className="text-gray-400 text-lg leading-relaxed mb-10">
+              <p className="text-gray-400 text-base sm:text-lg leading-relaxed mb-10">
                 Whether you run a single restaurant or a nationwide franchise, our team will build a custom package that fits your needs and budget.
               </p>
 
@@ -1240,7 +1242,7 @@ function App() {
             </div>
 
             {/* Right — Contact Form */}
-            <div className="glass-card rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl">
+            <div className="glass-card rounded-3xl p-5 sm:p-8 md:p-10 border border-white/10 shadow-2xl">
               {contactSubmitted ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1333,7 +1335,7 @@ function App() {
 
                     <button
                       type="submit"
-                      className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 flex items-center justify-center gap-2"
+                      className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-base sm:text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 flex items-center justify-center gap-2"
                     >
                       <Send className="w-5 h-5" />
                       Send Message
@@ -1355,7 +1357,7 @@ function App() {
         <section id="onboarding" className="bg-navy-900 py-24 relative overflow-hidden">
           <div className="grid-pattern absolute inset-0 z-0 opacity-30" />
           <div className="max-w-xl mx-auto px-6 relative z-10">
-            <div className="glass-card rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl">
+            <div className="glass-card rounded-3xl p-5 sm:p-8 md:p-10 border border-white/10 shadow-2xl">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full px-4 py-1.5 mb-4">
                   <Shield className="w-3.5 h-3.5 text-yellow-400" />
@@ -1364,7 +1366,7 @@ function App() {
                 <div className="w-14 h-14 bg-primary-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <ChefHat className="w-7 h-7 text-white" />
                 </div>
-                <h2 className="text-3xl font-bold text-white mb-2">Register Restaurant</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Register Restaurant</h2>
                 <p className="text-gray-500">Internal tool — create a restaurant account after sales approval.</p>
               </div>
 
@@ -1445,7 +1447,7 @@ function App() {
 
                 <button
                   type="submit" disabled={isSubmitting}
-                  className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-base sm:text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center gap-2">
@@ -1476,14 +1478,14 @@ function App() {
               <span className="text-xl font-bold text-white tracking-tight">PingDish</span>
             </div>
 
-            <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-4 md:gap-6 text-xs sm:text-sm">
               <a href="#features" className="text-gray-500 hover:text-gray-300 transition-colors">Features</a>
               <a href="#how-it-works" className="text-gray-500 hover:text-gray-300 transition-colors">How It Works</a>
               <a href="#pricing" className="text-gray-500 hover:text-gray-300 transition-colors">Pricing</a>
               <a href="#contact-sales" className="text-gray-500 hover:text-gray-300 transition-colors">Contact</a>
             </div>
 
-            <p className="text-gray-600 text-sm">&copy; 2026 PingDish. All rights reserved.</p>
+            <p className="text-gray-600 text-xs sm:text-sm">&copy; 2026 PingDish. All rights reserved.</p>
           </div>
         </div>
       </footer>
