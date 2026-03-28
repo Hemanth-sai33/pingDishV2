@@ -361,10 +361,8 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center py-0 sm:py-8">
-      <div className="w-full sm:w-[375px] h-[100dvh] sm:h-[812px] bg-cream sm:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col relative border-0 sm:border-8 sm:border-gray-900 box-content">
-        
-        <div className="hidden sm:block absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-gray-900 rounded-b-2xl z-20"></div>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="w-full max-w-md h-[100dvh] bg-cream overflow-hidden flex flex-col relative">
 
         <header className="pt-8 pb-4 px-6 bg-cream shrink-0 z-10">
           <div className="flex items-center justify-center pt-2">

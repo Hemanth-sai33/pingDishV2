@@ -20,7 +20,7 @@ import java.util.UUID;
 
 public class SubmitEnquiryActivity implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
     private final DynamoDbClient ddb = DynamoDbClient.create();
-    private final SesV2Client ses = SesV2Client.create();
+    private final SesV2Client ses = SesV2Client.builder().region(software.amazon.awssdk.regions.Region.AP_SOUTH_1).build();
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
@@ -48,6 +48,18 @@ public class SubmitEnquiryActivity implements RequestHandler<APIGatewayProxyRequ
             item.put("CreatedAt", AttributeValue.builder().s(Instant.now().toString()).build());
 
             ddb.putItem(PutItemRequest.builder().tableName("PingDish-Enquiries").item(item).build());
+
+            // Auto-verify restaurant owner's email in SES (sandbox mode requirement)
+            // Owner receives AWS verification email — once clicked, PingDish can email them
+            try {
+                ses.createEmailIdentity(CreateEmailIdentityRequest.builder()
+                        .emailIdentity(email).build());
+                context.getLogger().log("SES verification triggered for: " + email);
+            } catch (AlreadyExistsException e) {
+                context.getLogger().log("Email already verified or pending: " + email);
+            } catch (Exception e) {
+                context.getLogger().log("SES verify request failed: " + e.getMessage());
+            }
 
             // Send notification email to admin
             try {

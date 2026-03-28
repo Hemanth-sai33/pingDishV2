@@ -206,7 +206,7 @@ Also added scene panel transition classes:
 - **Starter Card** (left):
   - Title: "Starter" with subtitle "Perfect for single-location restaurants"
   - Price: "$0/mo" (5xl bold) + "Free forever"
-  - 6 features: Up to 30 tables, Real-time notifications, Kitchen dashboard, Printable QR codes, Customer feedback, Mobile-optimized view
+  - 6 features: Up to 3 tables, Real-time notifications, Kitchen dashboard, Printable QR codes, Customer feedback, Mobile-optimized view
   - CTA: "Get Started Free" (ghost button with white/10 bg)
 
 - **Enterprise Card** (right):

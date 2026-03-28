@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class ResetPasswordActivity implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
     private final DynamoDbClient ddb = DynamoDbClient.create();
-    private final SesV2Client ses = SesV2Client.create();
+    private final SesV2Client ses = SesV2Client.builder().region(software.amazon.awssdk.regions.Region.AP_SOUTH_1).build();
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {

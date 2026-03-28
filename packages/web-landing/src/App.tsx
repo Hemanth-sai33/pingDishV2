@@ -87,7 +87,7 @@ const downloadQrCodes = (tables: TableInfo[], restaurantName: string) => {
 <div class="qr-grid">
 ${tables.map(t => {
     const safeTableNum = escapeHtml(String(t.tableNumber));
-    const safeUrl = encodeURI(getQrCodeUrl(t.qrUrl, 150));
+    const safeUrl = getQrCodeUrl(t.qrUrl, 150);
     return `<div class="qr-card">
   <img src="${safeUrl}" alt="Table ${safeTableNum}"/>
   <h3>Table ${safeTableNum}</h3>
@@ -164,7 +164,7 @@ function HeroAnimation() {
 
   // ─── Scene 0: Customer Phone ───
   const renderCustomerScene = () => (
-    <div className={`absolute inset-0 flex flex-col p-6 transition-all duration-500 ${scene === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+    <div className={`absolute inset-0 flex flex-col p-4 sm:p-6 transition-all duration-500 ${scene === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
       {/* Phone header */}
       <div className="flex justify-between items-center mb-5">
         <span className="text-white/60 text-xs font-medium">9:41</span>
@@ -257,7 +257,7 @@ function HeroAnimation() {
     ];
 
     return (
-      <div className={`absolute inset-0 flex flex-col p-5 transition-all duration-500 ${scene === 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+      <div className={`absolute inset-0 flex flex-col p-4 sm:p-5 transition-all duration-500 ${scene === 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
         {/* Dashboard header */}
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2">
@@ -343,7 +343,7 @@ function HeroAnimation() {
 
   // ─── Scene 2: Dish Delivered ───
   const renderDeliveryScene = () => (
-    <div className={`absolute inset-0 flex flex-col items-center justify-center p-6 transition-all duration-500 ${scene === 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+    <div className={`absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 transition-all duration-500 ${scene === 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
       {/* Success checkmark */}
       <div className="relative mb-5">
         <div className={`w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center ${subStep >= 1 ? 'circle-grow' : 'opacity-0'}`}>
@@ -471,10 +471,10 @@ function HeroAnimation() {
   const sceneLabels = ['Customer Pings', 'Kitchen Receives', 'Dish Delivered'];
 
   return (
-    <div className="relative hidden lg:flex items-center justify-center animate-slide-in-right">
-      <div className="relative w-full max-w-md">
+    <div className="relative flex items-center justify-center animate-slide-in-right mx-auto lg:mx-0">
+      <div className="relative">
         {/* Phone frame */}
-        <div className="relative bg-navy-800 rounded-[2.5rem] p-3 shadow-2xl shadow-primary-500/10 border border-white/10">
+        <div className="relative w-[300px] bg-navy-800 rounded-[2.5rem] p-3 shadow-2xl shadow-primary-500/10 border border-white/10">
           <div className="bg-navy-900 rounded-[2rem] min-h-[460px] relative overflow-hidden">
             {renderCustomerScene()}
             {renderKitchenScene()}
@@ -498,8 +498,10 @@ function HeroAnimation() {
           {sceneLabels[scene]}
         </p>
 
-        {/* Floating contextual cards */}
-        {renderFloatingCards()}
+        {/* Floating contextual cards — hidden on small screens to prevent overflow */}
+        <div className="hidden sm:block">
+          {renderFloatingCards()}
+        </div>
       </div>
     </div>
   );
@@ -530,9 +532,9 @@ function StatCard({ end, suffix, prefix, label, icon, duration = 2000, decimals 
   };
 
   return (
-    <div ref={ref} className="glass-card rounded-2xl p-6 text-center stat-shimmer">
+    <div ref={ref} className="glass-card rounded-2xl p-4 sm:p-6 text-center stat-shimmer">
       <div className="text-primary-500 mb-2 flex justify-center">{icon}</div>
-      <div className="text-3xl md:text-4xl font-extrabold text-white mb-1 tabular-nums">
+      <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-1 tabular-nums">
         {prefix || ''}{hasAnimated ? formatDisplay(displayValue) : (decimals > 0 ? '0.' + '0'.repeat(decimals) : '0')}{suffix || ''}
       </div>
       <div className="text-gray-500 text-sm font-medium">{label}</div>
@@ -828,6 +830,7 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [loggedInRestaurant, setLoggedInRestaurant] = useState<{ id: string; name: string; tables: TableInfo[] } | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -847,20 +850,124 @@ function LoginPage() {
 
       const data = await res.json();
 
-      // Store auth token if returned
-      if (data.token) {
-        localStorage.setItem('pingdish_token', data.token);
-        localStorage.setItem('pingdish_restaurant', loginForm.restaurantId);
-      }
+      // Fetch tables for QR codes
+      const tablesRes = await apiFetch(`${API_URL}/restaurants/${loginForm.restaurantId}/tables`);
+      const tablesData = await tablesRes.json();
+      const tables = (tablesData.tables || []).map((t: number) => ({
+        tableNumber: t,
+        qrUrl: `https://app.pingdish.com/${loginForm.restaurantId}/${t}`,
+      }));
 
-      // Redirect to kitchen dashboard
-      window.location.href = `https://kitchen.pingdish.com/${loginForm.restaurantId}`;
+      setLoggedInRestaurant({ id: loginForm.restaurantId, name: data.restaurantName || loginForm.restaurantId, tables });
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       setIsLoggingIn(false);
     }
   };
+
+  // ─── Restaurant Owner Dashboard (post-login) ───
+  if (loggedInRestaurant) {
+    return (
+      <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Animated background layers */}
+        <div className="absolute inset-0 z-0">
+          <div className="hero-gradient absolute inset-0" />
+          <div className="grid-pattern absolute inset-0 opacity-40" />
+
+          {/* Floating orbs with different speeds */}
+          <div className="absolute top-[10%] left-[15%] w-80 h-80 bg-primary-500/10 rounded-full blur-[100px]" style={{ animation: 'float-slow 8s ease-in-out infinite' }} />
+          <div className="absolute bottom-[15%] right-[10%] w-96 h-96 bg-primary-500/[0.07] rounded-full blur-[120px]" style={{ animation: 'float-slow 10s ease-in-out infinite reverse' }} />
+          <div className="absolute top-[50%] left-[60%] w-64 h-64 bg-blue-500/[0.04] rounded-full blur-[80px]" style={{ animation: 'float-slow 6s ease-in-out infinite' }} />
+
+          {/* Animated rings */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] border border-primary-500/[0.06] rounded-full" style={{ animation: 'ring-pulse 4s ease-in-out infinite' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/[0.03] rounded-full" style={{ animation: 'ring-pulse 4s ease-in-out infinite 1s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] border border-primary-500/[0.04] rounded-full" style={{ animation: 'ring-pulse 4s ease-in-out infinite 2s' }} />
+
+          {/* Floating particles */}
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="absolute w-1 h-1 bg-primary-500/30 rounded-full" style={{
+              top: `${15 + i * 15}%`, left: `${10 + i * 16}%`,
+              animation: `particle-float ${3 + i * 0.5}s ease-in-out infinite ${i * 0.4}s`,
+            }} />
+          ))}
+        </div>
+
+        <div className="w-full max-w-lg relative z-10">
+          {/* Logo + Restaurant info */}
+          <div className="text-center mb-10 animate-fade-in-up">
+            <div className="relative inline-block mb-6">
+              <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-primary-500/40" style={{ animation: 'logo-glow 3s ease-in-out infinite' }}>
+                <ChefHat className="w-12 h-12 text-white" />
+              </div>
+              {/* Animated status ring */}
+              <div className="absolute -inset-2 border-2 border-primary-500/20 rounded-[1.75rem]" style={{ animation: 'ring-pulse 2s ease-in-out infinite' }} />
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-3 border-navy-950 flex items-center justify-center shadow-lg shadow-green-500/40">
+                <div className="w-2.5 h-2.5 bg-white rounded-full" style={{ animation: 'pulse 1.5s ease-in-out infinite' }} />
+              </div>
+            </div>
+            <h1 className="text-4xl font-extrabold text-white mb-3 tracking-tight">{loggedInRestaurant.name}</h1>
+            <div className="inline-flex items-center gap-3 bg-white/[0.04] border border-white/10 rounded-full px-5 py-2 backdrop-blur-sm">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-gray-300 text-sm font-medium">{loggedInRestaurant.tables.length} tables</span>
+              <span className="text-gray-600">·</span>
+              <span className="font-mono text-primary-400 text-sm">{loggedInRestaurant.id}</span>
+            </div>
+          </div>
+
+          {/* Action cards */}
+          <div className="space-y-5 animate-fade-in-up" style={{ animationDelay: '0.15s', animationFillMode: 'both' }}>
+            {/* Print QR Codes */}
+            <button
+              onClick={() => downloadQrCodes(loggedInRestaurant.tables, loggedInRestaurant.name)}
+              className="w-full relative overflow-hidden bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-primary-500/40 text-white px-7 py-7 rounded-3xl font-semibold transition-all duration-500 group flex items-center gap-5"
+            >
+              {/* Shimmer effect on hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-500/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <div className="w-16 h-16 bg-gradient-to-br from-primary-500/15 to-primary-500/5 group-hover:from-primary-500/25 group-hover:to-primary-500/10 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary-500/20 relative">
+                <QrCode className="w-8 h-8 text-primary-500" />
+              </div>
+              <div className="text-left flex-1 relative">
+                <div className="text-white font-bold text-xl mb-1 group-hover:text-primary-100 transition-colors">Print QR Codes</div>
+                <div className="text-gray-500 text-sm font-normal group-hover:text-gray-400 transition-colors">Printable codes for all {loggedInRestaurant.tables.length} tables</div>
+              </div>
+              <ArrowRight className="w-6 h-6 text-gray-600 group-hover:text-primary-400 group-hover:translate-x-2 transition-all duration-300 relative" />
+            </button>
+
+            {/* Kitchen Dashboard */}
+            <a
+              href={`https://kitchen.pingdish.com/${loggedInRestaurant.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full relative overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 text-white px-7 py-7 rounded-3xl font-semibold transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/30 group flex items-center gap-5"
+            >
+              {/* Animated shine */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              {/* Subtle pulse border */}
+              <div className="absolute inset-0 rounded-3xl border border-white/20" style={{ animation: 'ring-pulse 3s ease-in-out infinite' }} />
+              <div className="w-16 h-16 bg-white/15 group-hover:bg-white/25 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 relative">
+                <MonitorSmartphone className="w-8 h-8 text-white" />
+              </div>
+              <div className="text-left flex-1 relative">
+                <div className="text-white font-bold text-xl mb-1">Open Kitchen Dashboard</div>
+                <div className="text-white/50 text-sm font-normal group-hover:text-white/70 transition-colors">Monitor tables & pings in real-time</div>
+              </div>
+              <ArrowRight className="w-6 h-6 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all duration-300 relative" />
+            </a>
+          </div>
+
+          {/* Sign out */}
+          <div className="text-center mt-10 animate-fade-in-up" style={{ animationDelay: '0.3s', animationFillMode: 'both' }}>
+            <button onClick={() => { setLoggedInRestaurant(null); setLoginForm({ restaurantId: '', password: '' }); }} className="text-gray-600 hover:text-gray-300 text-sm transition-all duration-300 inline-flex items-center gap-2 hover:gap-3 px-4 py-2 rounded-xl hover:bg-white/5">
+              <ArrowRight className="w-3.5 h-3.5 rotate-180" />
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4 relative">
@@ -881,13 +988,13 @@ function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="glass-card rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl">
+        <div className="glass-card rounded-3xl p-5 sm:p-8 md:p-10 border border-white/10 shadow-2xl">
           <div className="text-center mb-8">
             <div className="w-14 h-14 bg-primary-500/10 border border-primary-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <LogIn className="w-7 h-7 text-primary-500" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
-            <p className="text-gray-500 text-sm">Sign in to access your kitchen dashboard</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">Welcome back</h1>
+            <p className="text-gray-500 text-sm">Sign in to manage your restaurant</p>
           </div>
 
           {loginError && (
@@ -945,7 +1052,7 @@ function LoginPage() {
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-base sm:text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoggingIn ? (
                 <span className="flex items-center justify-center gap-2">
@@ -977,7 +1084,7 @@ function LoginPage() {
               href="#contact-sales"
               className="block w-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-center py-3 rounded-xl text-sm font-medium transition-all"
             >
-              Don't have an account? Contact Sales
+              Don't have an account? Get Started
             </a>
             <p className="text-center text-gray-600 text-xs">
               Forgot your credentials?{' '}
@@ -1192,8 +1299,8 @@ function App() {
       {/* ─── HERO SECTION ─── */}
       <section className="hero-gradient min-h-screen flex items-center pt-20 relative">
         <div className="grid-pattern absolute inset-0 z-0" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 w-full">
+          <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-center">
             {/* Left - Text */}
             <div className="animate-fade-in-up">
               <div className="inline-flex items-center gap-2 bg-primary-500/10 border border-primary-500/20 rounded-full px-4 py-1.5 mb-6">
@@ -1201,29 +1308,29 @@ function App() {
                 <span className="text-primary-400 text-xs font-medium tracking-wide uppercase">Now Live</span>
               </div>
 
-              <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-[1.05] mb-6">
-                Register your{' '}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white leading-[1.05] mb-6">
+                Your customers{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
-                  restaurant
+                  shouldn't wait
                 </span>{' '}
-                now!
+                to be served
               </h1>
 
-              <p className="text-lg md:text-xl text-gray-400 leading-relaxed mb-10 max-w-lg">
-                With PingDish, any restaurant can upgrade table service instantly. Just scan, ping, and serve. It's that easy.
+              <p className="text-base sm:text-lg md:text-xl text-gray-400 leading-relaxed mb-10 max-w-lg">
+                One scan. One tap. Kitchen notified instantly. PingDish replaces hand-waving and waiting with real-time table-to-kitchen communication.
               </p>
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row items-start gap-4 max-w-md">
                 <a
                   href="#contact-sales"
-                  className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 flex items-center gap-2"
+                  className="bg-primary-500 hover:bg-primary-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 flex items-center gap-2"
                 >
                   Get Started <ArrowRight className="w-5 h-5" />
                 </a>
                 <a
                   href="#how-it-works"
-                  className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all flex items-center gap-2"
+                  className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all flex items-center gap-2"
                 >
                   See How It Works
                 </a>
@@ -1249,15 +1356,14 @@ function App() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">Features</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
               Everything you need to{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
-                level up
-              </span>{' '}
-              service
+                delight customers
+              </span>
             </h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-              PingDish gives your restaurant real-time communication between tables and kitchen, with zero friction.
+            <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto">
+              PingDish bridges the gap between your tables and kitchen — no hardware, no training, no friction.
             </p>
           </div>
 
@@ -1265,31 +1371,31 @@ function App() {
             {[
               {
                 icon: <Bell className="w-7 h-7" />,
-                title: 'Instant Notifications',
-                desc: 'Real-time alerts sent to your kitchen dashboard the moment a customer taps.',
+                title: 'Zero Wait Time',
+                desc: 'Customers tap once — your kitchen knows instantly. No more hand-waving or ignored tables.',
                 color: 'from-primary-500/20 to-primary-600/5',
               },
               {
                 icon: <QrCode className="w-7 h-7" />,
-                title: 'Simple QR Codes',
-                desc: 'Each table gets a unique QR code. Customers scan with any phone camera. No app needed.',
+                title: 'No App Required',
+                desc: 'Customers scan a QR code with their phone camera. Works instantly — no downloads, no sign-ups.',
                 color: 'from-blue-500/20 to-blue-600/5',
               },
               {
                 icon: <Zap className="w-7 h-7" />,
-                title: 'Lightning Fast',
-                desc: 'Powered by WebSockets for sub-second delivery. Your kitchen knows instantly.',
+                title: 'Real-Time Sync',
+                desc: 'WebSocket-powered live updates. Kitchen sees every ping the moment it happens across all devices.',
                 color: 'from-yellow-500/20 to-yellow-600/5',
               },
               {
                 icon: <Clock className="w-7 h-7" />,
-                title: 'Track Response Time',
-                desc: 'Monitor how fast your team responds. Improve service metrics and customer satisfaction.',
+                title: 'Serve Smarter',
+                desc: 'See which tables need attention, who\'s being served, and track your team\'s response times.',
                 color: 'from-emerald-500/20 to-emerald-600/5',
               },
             ].map((feature, i) => (
-              <div key={i} className="feature-card glass-card rounded-2xl p-7 group cursor-default">
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white mb-5 group-hover:scale-110 transition-transform`}>
+              <div key={i} className="feature-card glass-card rounded-2xl p-5 sm:p-6 md:p-7 group cursor-default">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white mb-5 group-hover:scale-110 transition-transform`}>
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
@@ -1306,42 +1412,42 @@ function App() {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
             <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">How It Works</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
               Set up in{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
                 3 simple steps
               </span>
             </h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto">
               From sign-up to first ping in under 2 minutes. No technical knowledge needed.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
             {[
               {
                 step: '01',
                 icon: <ChefHat className="w-8 h-8" />,
-                title: 'Register your restaurant',
-                desc: 'Enter your restaurant name and number of tables. We generate everything for you.',
+                title: 'Sign up your restaurant',
+                desc: 'Reach out to us — we set up your account, generate table QR codes, and get you live in minutes.',
               },
               {
                 step: '02',
                 icon: <QrCode className="w-8 h-8" />,
-                title: 'Print QR codes',
-                desc: 'Download and print unique QR codes for each table. Place them where customers can see.',
+                title: 'Place QR codes on tables',
+                desc: 'Download and print unique QR codes for each table. Stick them where customers can easily scan.',
               },
               {
                 step: '03',
                 icon: <Smartphone className="w-8 h-8" />,
-                title: 'Customers scan & ping',
-                desc: 'Customers scan the QR code and tap to notify your kitchen. Real-time, no app required.',
+                title: 'Customers ping, you serve',
+                desc: 'Customers scan and tap to notify your kitchen in real-time. No app install, no waiting around.',
               },
             ].map((step, i) => (
               <div key={i} className="relative group">
-                <div className="glass-card rounded-2xl p-8 h-full hover:border-primary-500/20 transition-all">
-                  <div className="text-6xl font-black text-white/5 absolute top-4 right-6">{step.step}</div>
-                  <div className="w-14 h-14 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 mb-5">
+                <div className="glass-card rounded-2xl p-5 sm:p-6 md:p-8 h-full hover:border-primary-500/20 transition-all">
+                  <div className="text-4xl sm:text-5xl md:text-6xl font-black text-white/5 absolute top-4 right-6">{step.step}</div>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 mb-5">
                     {step.icon}
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
@@ -1364,33 +1470,33 @@ function App() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">Pricing</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
               Plans that{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
                 scale with you
               </span>
             </h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto">
               Start free, upgrade when you need more. Enterprise solutions for restaurant chains and franchises.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto">
             {/* ── Free Plan ── */}
-            <div className="relative bg-gradient-to-br from-navy-800 to-navy-900 rounded-3xl p-8 border border-white/10 shadow-xl">
+            <div className="relative bg-gradient-to-br from-navy-800 to-navy-900 rounded-3xl p-5 sm:p-6 md:p-8 border border-white/10 shadow-xl">
               <div className="mb-6">
                 <h3 className="text-lg font-bold text-white mb-1">Starter</h3>
                 <p className="text-gray-500 text-sm">Perfect for single-location restaurants</p>
               </div>
 
               <div className="mb-6">
-                <div className="text-5xl font-black text-white mb-1">$0<span className="text-lg font-medium text-gray-500">/mo</span></div>
+                <div className="text-4xl sm:text-5xl font-black text-white mb-1">$0<span className="text-lg font-medium text-gray-500">/mo</span></div>
                 <p className="text-gray-500 text-sm">Free forever</p>
               </div>
 
               <div className="space-y-3 mb-8">
                 {[
-                  'Up to 30 tables',
+                  'Up to 3 tables',
                   'Real-time notifications',
                   'Kitchen dashboard',
                   'Printable QR codes',
@@ -1405,14 +1511,10 @@ function App() {
                   </div>
                 ))}
               </div>
-
-              <a href="#contact-sales" className="block w-full bg-white/10 hover:bg-white/15 text-white text-center py-4 rounded-xl font-semibold text-lg transition-all border border-white/10">
-                Get Started Free <ArrowRight className="w-4 h-4 inline ml-1" />
-              </a>
-            </div>
+          </div>
 
             {/* ── Enterprise Plan ── */}
-            <div className="relative bg-gradient-to-br from-navy-800 to-navy-900 rounded-3xl p-8 border border-primary-500/20 shadow-2xl shadow-primary-500/5">
+            <div className="relative bg-gradient-to-br from-navy-800 to-navy-900 rounded-3xl p-5 sm:p-6 md:p-8 border border-primary-500/20 shadow-2xl shadow-primary-500/5">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <span className="bg-primary-500 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
                   Most Popular
@@ -1428,7 +1530,7 @@ function App() {
               </div>
 
               <div className="mb-6">
-                <div className="text-4xl font-black text-white mb-1">Custom</div>
+                <div className="text-3xl sm:text-4xl font-black text-white mb-1">Custom</div>
                 <p className="text-gray-500 text-sm">Tailored to your scale</p>
               </div>
 
@@ -1451,11 +1553,7 @@ function App() {
                   </div>
                 ))}
               </div>
-
-              <a href="#contact-sales" className="block w-full bg-primary-500 hover:bg-primary-600 text-white text-center py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25">
-                Talk to Sales <ArrowRight className="w-4 h-4 inline ml-1" />
-              </a>
-            </div>
+          </div>
           </div>
         </div>
       </section>
@@ -1464,18 +1562,18 @@ function App() {
       <section id="contact-sales" className="bg-navy-900 py-24 relative overflow-hidden">
         <div className="grid-pattern absolute inset-0 z-0 opacity-30" />
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-start">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
             {/* Left — Info */}
             <div>
               <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">Contact Sales</span>
-              <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-3 mb-6">
                 Let's find the{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
                   right plan
                 </span>{' '}
                 for you
               </h2>
-              <p className="text-gray-400 text-lg leading-relaxed mb-10">
+              <p className="text-gray-400 text-base sm:text-lg leading-relaxed mb-10">
                 Whether you run a single restaurant or a nationwide franchise, our team will build a custom package that fits your needs and budget.
               </p>
 
@@ -1511,7 +1609,7 @@ function App() {
             </div>
 
             {/* Right — Contact Form */}
-            <div className="glass-card rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl">
+            <div className="glass-card rounded-3xl p-5 sm:p-8 md:p-10 border border-white/10 shadow-2xl">
               {contactSubmitted ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1610,7 +1708,7 @@ function App() {
 
                     <button
                       type="submit"
-                      className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 flex items-center justify-center gap-2"
+                      className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-base sm:text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 flex items-center justify-center gap-2"
                     >
                       <Send className="w-5 h-5" />
                       Send Message
@@ -1632,7 +1730,7 @@ function App() {
         <section id="onboarding" className="bg-navy-900 py-24 relative overflow-hidden">
           <div className="grid-pattern absolute inset-0 z-0 opacity-30" />
           <div className="max-w-xl mx-auto px-6 relative z-10">
-            <div className="glass-card rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl">
+            <div className="glass-card rounded-3xl p-5 sm:p-8 md:p-10 border border-white/10 shadow-2xl">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full px-4 py-1.5 mb-4">
                   <Shield className="w-3.5 h-3.5 text-yellow-400" />
@@ -1641,7 +1739,7 @@ function App() {
                 <div className="w-14 h-14 bg-primary-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <ChefHat className="w-7 h-7 text-white" />
                 </div>
-                <h2 className="text-3xl font-bold text-white mb-2">Register Restaurant</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Register Restaurant</h2>
                 <p className="text-gray-500">Internal tool — create a restaurant account after sales approval.</p>
               </div>
 
@@ -1722,7 +1820,7 @@ function App() {
 
                 <button
                   type="submit" disabled={isSubmitting}
-                  className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-base sm:text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center gap-2">
@@ -1753,14 +1851,14 @@ function App() {
               <span className="text-xl font-bold text-white tracking-tight">PingDish</span>
             </div>
 
-            <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-4 md:gap-6 text-xs sm:text-sm">
               <a href="#features" className="text-gray-500 hover:text-gray-300 transition-colors">Features</a>
               <a href="#how-it-works" className="text-gray-500 hover:text-gray-300 transition-colors">How It Works</a>
               <a href="#pricing" className="text-gray-500 hover:text-gray-300 transition-colors">Pricing</a>
               <a href="#contact-sales" className="text-gray-500 hover:text-gray-300 transition-colors">Contact</a>
             </div>
 
-            <p className="text-gray-600 text-sm">&copy; 2026 PingDish. All rights reserved.</p>
+            <p className="text-gray-600 text-xs sm:text-sm">&copy; 2026 PingDish. All rights reserved.</p>
           </div>
         </div>
       </footer>
