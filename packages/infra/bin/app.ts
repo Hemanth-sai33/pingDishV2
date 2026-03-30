@@ -22,6 +22,7 @@ const computeStack = new ComputeStack(app, 'PingDish-Compute', {
   connectionsTable: dynamoDbStack.connectionsTable,
   enquiriesTable: dynamoDbStack.enquiriesTable,
   restaurantsTable: dynamoDbStack.restaurantsTable,
+  auditLogTable: dynamoDbStack.auditLogTable,
 });
 computeStack.addDependency(dynamoDbStack);
 

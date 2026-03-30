@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -346,4 +348,353 @@ body {
 
 .scene-progress {
   animation: progress-fill 4s linear forwards;
+}
+
+/* ═══ ONE IN A MILLION — Landing Page Upgrades ═══ */
+
+/* Scroll-reveal animations */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes reveal-left {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes reveal-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes reveal-scale {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.reveal-up { opacity: 0; }
+.reveal-up.revealed { animation: reveal-up 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.reveal-left { opacity: 0; }
+.reveal-left.revealed { animation: reveal-left 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.reveal-right { opacity: 0; }
+.reveal-right.revealed { animation: reveal-right 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.reveal-scale { opacity: 0; }
+.reveal-scale.revealed { animation: reveal-scale 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+/* Staggered reveal children */
+.reveal-stagger.revealed > *:nth-child(1) { animation-delay: 0s; }
+.reveal-stagger.revealed > *:nth-child(2) { animation-delay: 0.1s; }
+.reveal-stagger.revealed > *:nth-child(3) { animation-delay: 0.2s; }
+.reveal-stagger.revealed > *:nth-child(4) { animation-delay: 0.3s; }
+
+/* Testimonial card animation */
+@keyframes testimonial-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.testimonial-hover:hover {
+  animation: testimonial-float 2s ease-in-out infinite;
+  box-shadow: 0 20px 60px rgba(249, 115, 22, 0.1);
+}
+
+/* Social proof ticker */
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-scroll {
+  animation: ticker-scroll 30s linear infinite;
+}
+.ticker-scroll:hover {
+  animation-play-state: paused;
+}
+
+/* Animated gradient text */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animated-gradient-text {
+  background: linear-gradient(90deg, #f97316, #fbbf24, #f97316);
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease-in-out infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hero fade-in-up */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+  opacity: 0;
+}
+
+/* ═══════════════════════════════════════════
+   ADMIN PANEL — Premium Hero UI
+   ═══════════════════════════════════════════ */
+
+/* Hero heading gradient — PingDish orange palette */
+.admin-hero-heading {
+  background: linear-gradient(144.5deg, #ffffff 28%, rgba(249, 115, 22, 0.6) 70%, transparent 115%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Pill button construction */
+.admin-pill-btn {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(255, 255, 255, 0.1));
+  border: none;
+}
+
+.admin-pill-btn .admin-pill-glow {
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.6), transparent);
+  filter: blur(2px);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.admin-pill-btn:hover .admin-pill-glow {
+  filter: blur(4px);
+  opacity: 1;
+  left: 10%;
+  right: 10%;
+}
+
+/* Login card glass */
+.admin-login-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
+}
+
+.admin-login-card-focused {
+  border-color: rgba(249, 115, 22, 0.15);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4), 0 0 80px rgba(249, 115, 22, 0.05);
+}
+
+/* Dashboard header glass */
+.admin-dash-header {
+  background: rgba(6, 11, 20, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Stat cards */
+.admin-stat-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+}
+
+.admin-stat-card:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Spinner */
+@keyframes admin-spin {
+  to { transform: rotate(360deg); }
+}
+.admin-spinner {
+  animation: admin-spin 0.8s linear infinite;
+}
+
+/* Modal overlay entrance */
+@keyframes admin-modal-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.admin-modal-overlay {
+  animation: admin-modal-in 0.2s ease-out;
+}
+
+/* Modal card entrance */
+@keyframes admin-modal-card-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.admin-modal {
+  animation: admin-modal-card-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Toast entrance */
+@keyframes admin-toast-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.admin-toast {
+  animation: admin-toast-in 0.3s ease-out;
+}
+
+/* Card hover border glow */
+.admin-card {
+  position: relative;
+}
+.admin-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent, rgba(249, 115, 22, 0.1), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.admin-card:hover::before {
+  opacity: 1;
+}
+
+/* Table wrapper subtle glow */
+.admin-table-wrapper {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+/* Badge pill shimmer */
+@keyframes badge-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.admin-badge-pill {
+  position: relative;
+  overflow: hidden;
+}
+.admin-badge-pill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 30%, rgba(249, 115, 22, 0.05) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: badge-shimmer 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════
+   LIQUID GLASS MORPHISM — Landing Page Hero
+   ═══════════════════════════════════════════ */
+
+@layer components {
+  /* Light liquid glass */
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.01);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: none;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.15) 20%,
+      transparent 40%,
+      transparent 60%,
+      rgba(255, 255, 255, 0.15) 80%,
+      rgba(255, 255, 255, 0.45) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Strong liquid glass — for panels and CTAs */
+  .liquid-glass-strong {
+    background: rgba(255, 255, 255, 0.02);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+    border: none;
+    box-shadow:
+      4px 4px 4px rgba(0, 0, 0, 0.05),
+      inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .liquid-glass-strong::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      transparent 40%,
+      transparent 60%,
+      rgba(255, 255, 255, 0.2) 80%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Orange-tinted liquid glass — for PingDish login page */
+  .liquid-glass-orange {
+    background: rgba(249, 115, 22, 0.02);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+    border: none;
+    box-shadow:
+      4px 4px 4px rgba(0, 0, 0, 0.05),
+      inset 0 1px 1px rgba(249, 115, 22, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .liquid-glass-orange::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(
+      180deg,
+      rgba(249, 115, 22, 0.4) 0%,
+      rgba(249, 115, 22, 0.15) 20%,
+      transparent 40%,
+      transparent 60%,
+      rgba(249, 115, 22, 0.15) 80%,
+      rgba(249, 115, 22, 0.4) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 }

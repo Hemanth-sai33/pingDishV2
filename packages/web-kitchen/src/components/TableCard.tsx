@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { TableData } from '../types';
 
 interface TableCardProps {
@@ -7,27 +7,52 @@ interface TableCardProps {
   onServing: (id: string) => void;
 }
 
+// Live elapsed timer hook
+function useElapsedTimer(startTime: number | null) {
+  const [elapsed, setElapsed] = useState('');
+
+  useEffect(() => {
+    if (!startTime) { setElapsed(''); return; }
+
+    const update = () => {
+      const diff = Math.floor((Date.now() - startTime) / 1000);
+      const mins = Math.floor(diff / 60);
+      const secs = diff % 60;
+      setElapsed(mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `0:${secs.toString().padStart(2, '0')}`);
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [startTime]);
+
+  return elapsed;
+}
+
 export const TableCard: React.FC<TableCardProps> = ({ data, onPing, onServing }) => {
+  const elapsed = useElapsedTimer(data.pingStatus === 'PINGED' ? data.firstPingTimestamp : null);
+
   let containerClass = "bg-slate-800 border-slate-700 text-slate-200";
   let pingCountClass = "text-slate-500";
   let badgeClass = "bg-slate-700 text-slate-300";
+  let glowClass = "";
 
   if (data.pingStatus === 'PINGED') {
     if (data.pings >= 3) {
-      // 3+ pings = Red (Critical)
-      containerClass = "bg-red-600 border-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.6)] animate-pulse";
+      containerClass = "bg-red-600 border-red-500 text-white";
       pingCountClass = "text-red-200";
       badgeClass = "bg-red-800 text-white font-black";
+      glowClass = "urgent-glow";
     } else if (data.pings === 2) {
-      // 2 pings = Amber (Warning)
       containerClass = "bg-amber-500 border-amber-400 text-white";
       pingCountClass = "text-amber-200";
       badgeClass = "bg-amber-700 text-amber-100 font-bold";
+      glowClass = "warning-glow";
     } else if (data.pings === 1) {
-      // 1 ping = Green (Active)
       containerClass = "bg-green-600 border-green-500 text-white";
       pingCountClass = "text-green-200";
       badgeClass = "bg-green-800 text-green-100 font-bold";
+      glowClass = "active-glow";
     }
   } else if (data.pingStatus === 'SERVING') {
     containerClass = "bg-yellow-500 border-yellow-400 text-white";
@@ -35,8 +60,18 @@ export const TableCard: React.FC<TableCardProps> = ({ data, onPing, onServing })
     badgeClass = "bg-yellow-700 text-yellow-100 font-bold";
   }
 
+  // Determine elapsed time urgency class
+  const getTimerClass = () => {
+    if (!data.firstPingTimestamp || data.pingStatus !== 'PINGED') return '';
+    const waitSecs = Math.floor((Date.now() - data.firstPingTimestamp) / 1000);
+    if (waitSecs > 120) return 'text-red-200 timer-urgent';
+    if (waitSecs > 60) return 'text-amber-200';
+    return 'text-white/70';
+  };
+
   return (
-    <div className={`relative flex flex-col rounded-xl border-2 p-3 transition-all duration-300 transform hover:scale-[1.02] aspect-square shadow-xl overflow-hidden ${containerClass}`}>
+    <div className={`relative flex flex-col rounded-xl border-2 p-3 transition-all duration-300 transform hover:scale-[1.02] aspect-square shadow-xl overflow-hidden ${containerClass} ${glowClass}`}>
+      {/* Header */}
       <div className="flex justify-between items-start mb-2 shrink-0 z-10">
         <div className={`text-2xl font-black rounded px-2 py-1 shadow-sm ${badgeClass}`}>
           T-{data.tableNumber}
@@ -47,8 +82,24 @@ export const TableCard: React.FC<TableCardProps> = ({ data, onPing, onServing })
         </div>
       </div>
 
+      {/* Live elapsed timer */}
+      {elapsed && data.pingStatus === 'PINGED' && (
+        <div className={`text-center mt-1 z-10 ${getTimerClass()}`}>
+          <div className="text-[9px] uppercase tracking-widest font-bold opacity-60 mb-0.5">Waiting</div>
+          <div className="text-lg font-black tabular-nums tracking-tight">{elapsed}</div>
+        </div>
+      )}
+
+      {data.pingStatus === 'SERVING' && (
+        <div className="text-center mt-1 z-10 text-yellow-100/80">
+          <div className="text-[9px] uppercase tracking-widest font-bold opacity-60 mb-0.5">Status</div>
+          <div className="text-sm font-bold">Being served...</div>
+        </div>
+      )}
+
       <div className="flex-grow"></div>
 
+      {/* Footer */}
       <div className="mt-auto flex items-end justify-between shrink-0 z-10">
         <div className="flex flex-col -mb-2">
           <span className="text-[9px] uppercase tracking-widest font-bold opacity-60">Pings</span>
@@ -59,9 +110,9 @@ export const TableCard: React.FC<TableCardProps> = ({ data, onPing, onServing })
 
         <div className="flex flex-col gap-2 mb-1">
           {data.pingStatus === 'PINGED' && (
-            <button 
+            <button
               onClick={() => onServing(data.id)}
-              className="p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/10 text-white"
+              className="p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/10 text-white active:scale-90"
               title="Mark as Serving"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -69,9 +120,9 @@ export const TableCard: React.FC<TableCardProps> = ({ data, onPing, onServing })
               </svg>
             </button>
           )}
-          <button 
+          <button
             onClick={() => onPing(data.id)}
-            className="p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/10 text-white"
+            className="p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-md transition-colors border border-white/10 text-white active:scale-90"
             title="Simulate Ping (Demo)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

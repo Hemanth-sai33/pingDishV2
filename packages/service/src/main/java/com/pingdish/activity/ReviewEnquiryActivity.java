@@ -6,6 +6,8 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.pingdish.util.AdminAuthHelper;
+import com.pingdish.util.AuditLogger;
 import com.pingdish.util.ErrorHandler;
 import com.pingdish.util.ResponseHelper;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -25,8 +27,8 @@ public class ReviewEnquiryActivity implements RequestHandler<APIGatewayProxyRequ
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
         try {
-            String adminKey = event.getHeaders() != null ? event.getHeaders().get("x-admin-key") : null;
-            if (adminKey == null || !adminKey.equals(System.getenv("ADMIN_SECRET"))) {
+            // [SECURITY] Use AdminAuthHelper instead of raw key comparison
+            if (!AdminAuthHelper.isAuthenticated(event)) {
                 return ResponseHelper.respond(403, Map.of("error", "Unauthorized"), event);
             }
 
@@ -56,7 +58,7 @@ public class ReviewEnquiryActivity implements RequestHandler<APIGatewayProxyRequ
                 String password = generatePassword();
                 String passwordHash = hashPassword(password);
 
-                // Save to Restaurants table
+                // Save to Restaurants table with MustChangePassword flag
                 Map<String, AttributeValue> restItem = new HashMap<>();
                 restItem.put("RestaurantId", AttributeValue.builder().s(restaurantId).build());
                 restItem.put("RestaurantName", AttributeValue.builder().s(restaurantName).build());
@@ -67,9 +69,11 @@ public class ReviewEnquiryActivity implements RequestHandler<APIGatewayProxyRequ
                 restItem.put("Status", AttributeValue.builder().s("ACTIVE").build());
                 restItem.put("EnquiryId", AttributeValue.builder().s(enquiryId).build());
                 restItem.put("CreatedAt", AttributeValue.builder().s(Instant.now().toString()).build());
+                // [SECURITY] Flag as temporary password
+                restItem.put("MustChangePassword", AttributeValue.builder().bool(true).build());
                 ddb.putItem(PutItemRequest.builder().tableName("PingDish-Restaurants").item(restItem).build());
 
-                // Create table entries (same as RegisterRestaurantActivity)
+                // Create table entries
                 for (int i = 1; i <= numberOfTables; i++) {
                     Map<String, AttributeValue> tableItem = new HashMap<>();
                     tableItem.put("QrCode", AttributeValue.builder().s(restaurantId + "#" + i).build());
@@ -92,15 +96,20 @@ public class ReviewEnquiryActivity implements RequestHandler<APIGatewayProxyRequ
                                 ":rid", AttributeValue.builder().s(restaurantId).build()))
                         .build());
 
-                // Email credentials to owner
+                // Email credentials to owner (clearly marked as temporary)
                 sendEmail(ownerEmail, "Welcome to PingDish - Your Login Credentials",
                         "Hi " + enquiry.get("Name").s() + ",\n\n" +
                         "Your restaurant has been approved on PingDish!\n\n" +
                         "Login at: https://www.pingdish.com/#login\n" +
                         "Restaurant ID: " + restaurantId + "\n" +
-                        "Password: " + password + "\n\n" +
+                        "Temporary Password: " + password + "\n\n" +
+                        "IMPORTANT: This is a temporary password. You will be required to change it on your first login.\n\n" +
                         "Kitchen Dashboard: https://kitchen.pingdish.com/" + restaurantId + "\n\n" +
-                        "Please change your password after first login.\n\nTeam PingDish", context);
+                        "Team PingDish", context);
+
+                // [SECURITY] Audit log
+                AuditLogger.log(ddb, "APPROVE_ENQUIRY", "ENQUIRY", enquiryId,
+                        "Approved enquiry for " + company + ". Created restaurant: " + restaurantId + " with " + numberOfTables + " tables.", event);
 
                 return ResponseHelper.respond(200, Map.of("success", true, "restaurantId", restaurantId), event);
 
@@ -119,6 +128,10 @@ public class ReviewEnquiryActivity implements RequestHandler<APIGatewayProxyRequ
                         "Hi " + enquiry.get("Name").s() + ",\n\n" +
                         "Thank you for your interest in PingDish. Unfortunately, we're unable to onboard your restaurant at this time.\n\n" +
                         "Please feel free to reach out again.\n\nTeam PingDish", context);
+
+                // [SECURITY] Audit log
+                AuditLogger.log(ddb, "DECLINE_ENQUIRY", "ENQUIRY", enquiryId,
+                        "Declined enquiry from " + company + " (" + ownerEmail + ")", event);
 
                 return ResponseHelper.respond(200, Map.of("success", true), event);
             }

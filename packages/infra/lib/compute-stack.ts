@@ -13,6 +13,7 @@ export interface ComputeStackProps extends cdk.StackProps {
   connectionsTable: dynamodb.ITable;
   enquiriesTable: dynamodb.ITable;
   restaurantsTable: dynamodb.ITable;
+  auditLogTable: dynamodb.ITable;
 }
 
 /**
@@ -73,6 +74,7 @@ export class ComputeStack extends cdk.Stack {
       props.connectionsTable.grantReadWriteData(fn);
       props.enquiriesTable.grantReadWriteData(fn);
       props.restaurantsTable.grantReadWriteData(fn);
+      props.auditLogTable.grantReadWriteData(fn);
 
       fn.addToRolePolicy(new iam.PolicyStatement({
         actions: ['execute-api:ManageConnections'],

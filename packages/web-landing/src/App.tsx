@@ -1,6 +1,131 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, QrCode, Zap, Clock, Check, Download, ExternalLink, ArrowRight, ChefHat, Smartphone, BarChart3, Shield, Menu, X, Star, Users, Timer, UtensilsCrossed, Sparkles, MonitorSmartphone, MessageSquare, Send, Building2, Headphones, Globe, Crown, Eye, EyeOff, Lock, LogIn } from 'lucide-react';
+import { Bell, QrCode, Zap, Clock, Check, Download, ExternalLink, ArrowRight, ChefHat, Smartphone, BarChart3, Shield, Menu, X, Star, Users, Timer, UtensilsCrossed, Sparkles, MonitorSmartphone, MessageSquare, Send, Building2, Headphones, Globe, Crown, Eye, EyeOff, Lock, LogIn, Quote, BookOpen, Wand2 } from 'lucide-react';
 import { escapeHtml, isValidKitchenUrl } from './utils/security';
+
+/* ═══════════════════════════════════════════════════════
+   SCROLL REVEAL HOOK — Animate elements on scroll
+   ═══════════════════════════════════════════════════════ */
+
+function useScrollReveal() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right, .reveal-scale, .reveal-stagger').forEach(el => {
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+}
+
+/* ═══════════════════════════════════════════════════════
+   TESTIMONIALS — Social proof from restaurant owners
+   ═══════════════════════════════════════════════════════ */
+
+function Testimonials() {
+  const testimonials = [
+    {
+      name: 'Priya Sharma',
+      role: 'Owner, Spice Garden',
+      text: 'Our kitchen response time dropped by 40% after installing PingDish. Customers love the QR code experience — no more waving hands or waiting forever.',
+      rating: 5,
+      avatar: 'PS',
+    },
+    {
+      name: 'Rajesh Kumar',
+      role: 'Manager, The Biryani House',
+      text: 'The real-time dashboard is a game-changer. We can see exactly which tables need attention. Our Google reviews improved from 3.8 to 4.5 stars in two months.',
+      rating: 5,
+      avatar: 'RK',
+    },
+    {
+      name: 'Ananya Patel',
+      role: 'Co-founder, Café Bloom',
+      text: 'Setup took literally 5 minutes. We printed QR codes, stuck them on tables, and started receiving pings the same evening. Brilliant simplicity.',
+      rating: 5,
+      avatar: 'AP',
+    },
+  ];
+
+  return (
+    <section className="bg-navy-950 py-24 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-16 reveal-up">
+          <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">Testimonials</span>
+          <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
+            Loved by{' '}
+            <span className="animated-gradient-text">restaurant owners</span>
+          </h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            Don't just take our word for it — hear from restaurants already using PingDish.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8 reveal-stagger reveal-up">
+          {testimonials.map((t, i) => (
+            <div key={i} className="glass-card rounded-2xl p-8 testimonial-hover transition-all duration-300 reveal-up" style={{animationDelay: `${i * 0.15}s`}}>
+              <Quote className="w-8 h-8 text-primary-500/30 mb-4" />
+              <p className="text-gray-300 leading-relaxed mb-6 text-sm">{t.text}</p>
+              <div className="flex items-center gap-3 mt-auto">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-sm font-bold">
+                  {t.avatar}
+                </div>
+                <div>
+                  <div className="text-white font-semibold text-sm">{t.name}</div>
+                  <div className="text-gray-500 text-xs">{t.role}</div>
+                </div>
+                <div className="ml-auto flex gap-0.5">
+                  {Array.from({ length: t.rating }).map((_, j) => (
+                    <Star key={j} className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   SOCIAL PROOF TICKER — Trust bar
+   ═══════════════════════════════════════════════════════ */
+
+function SocialProofTicker() {
+  const items = [
+    '🍕 Pizza Palace just joined PingDish',
+    '⭐ 4.9/5 average customer rating',
+    '🔔 10,000+ pings sent this week',
+    '🏆 #1 table service tool in India',
+    '🚀 Setup in under 5 minutes',
+    '💚 Free for restaurants under 30 tables',
+    '🍜 Noodle Barn improved response time by 50%',
+    '📱 Works on any smartphone — no app needed',
+  ];
+
+  return (
+    <div className="bg-navy-900 border-y border-white/5 py-3 overflow-hidden relative">
+      <div className="ticker-scroll flex whitespace-nowrap gap-12">
+        {[...items, ...items].map((item, i) => (
+          <span key={i} className="text-gray-500 text-sm font-medium flex items-center gap-2 shrink-0">
+            {item}
+            <span className="text-primary-500/30">·</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ═══════════════════════════════════════════════════════
    ANIMATED COUNT-UP HOOK
@@ -569,6 +694,8 @@ function AdminPanel({ apiUrl, apiFetch }: { apiUrl: string; apiFetch: (url: stri
   const [loading, setLoading] = useState(false);
   const [approveForm, setApproveForm] = useState<{ id: string; restaurantId: string; restaurantName: string; numberOfTables: string } | null>(null);
   const [msg, setMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loginFocused, setLoginFocused] = useState(false);
 
   const authHeaders = { 'X-Admin-Key': adminKey };
 
@@ -633,60 +760,223 @@ function AdminPanel({ apiUrl, apiFetch }: { apiUrl: string; apiFetch: (url: stri
     showMsg(data.success ? `Password reset — email sent to ${data.emailSentTo}` : data.error, data.success ? 'success' : 'error');
   };
 
+  /* ═══ Premium Pill Button Component ═══ */
+  const PillButton = ({ children, variant = 'outline', onClick, type, className = '' }: { children: React.ReactNode; variant?: 'outline' | 'solid'; onClick?: () => void; type?: 'submit' | 'button'; className?: string }) => (
+    <button type={type || 'button'} onClick={onClick}
+      className={`admin-pill-btn relative rounded-full transition-all duration-300 group ${className}`}
+      style={{ padding: '1px' }}>
+      <span className="admin-pill-glow" />
+      <span className={`relative z-10 block rounded-full font-medium text-sm transition-all duration-300 ${
+        variant === 'solid'
+          ? 'bg-gradient-to-b from-orange-400 to-orange-600 text-white hover:from-orange-500 hover:to-orange-700 shadow-lg shadow-orange-500/25'
+          : 'bg-[#080e1a] text-white hover:bg-[#0d1526]'
+      }`} style={{ padding: '11px 29px' }}>
+        {children}
+      </span>
+    </button>
+  );
+
+  /* ═══ LOGIN — Full-screen hero with video background ═══ */
   if (!loggedIn) {
     return (
-      <div className="min-h-screen bg-[#080e1a] flex items-center justify-center p-4">
-        <form onSubmit={handleLogin} className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-7 h-7 text-white" />
+      <div className="admin-hero-login min-h-screen relative overflow-hidden" style={{ fontFamily: "'General Sans', 'Inter', system-ui, sans-serif" }}>
+        {/* Background video */}
+        <video
+          autoPlay muted loop playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260217_030345_246c0224-10a4-422c-b324-070b7c0eceda.mp4"
+        />
+        {/* Dark overlay with orange tint */}
+        <div className="absolute inset-0 bg-[#080e1a]/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#080e1a]/40 via-transparent to-[#080e1a]/90" />
+
+        {/* Navbar */}
+        <nav className="relative z-20 flex items-center justify-between" style={{ padding: '20px 40px' }}>
+          <div className="flex items-center gap-8">
+            {/* Logo */}
+            <a href="/" className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <Bell className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-white tracking-tight">PingDish</span>
+            </a>
+            {/* Nav links — hidden on mobile */}
+            <div className="hidden md:flex items-center" style={{ gap: '30px' }}>
+              {['Dashboard', 'Restaurants', 'Analytics', 'Settings'].map(link => (
+                <span key={link} className="text-white/70 text-sm font-medium cursor-default hover:text-white transition-colors flex items-center" style={{ gap: '6px' }}>
+                  {link}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><polyline points="6 9 12 15 18 9"/></svg>
+                </span>
+              ))}
             </div>
-            <h1 className="text-2xl font-bold text-white">PingDish Admin</h1>
-            <p className="text-gray-500 text-sm mt-1">Enter your admin key to continue</p>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <input type="password" value={adminKey} onChange={e => setAdminKey(e.target.value)} required autoFocus
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white mb-4 focus:border-orange-500 focus:outline-none transition-colors" placeholder="Admin secret key" />
-            <button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors">Sign In</button>
+          <a href="/">
+            <PillButton variant="outline">
+              <span className="flex items-center gap-2">
+                <Globe className="w-4 h-4" /> Back to Site
+              </span>
+            </PillButton>
+          </a>
+        </nav>
+
+        {/* Hero content — centered */}
+        <div className="relative z-10 flex flex-col items-center justify-center text-center" style={{ paddingTop: 'clamp(120px, 20vh, 280px)', paddingBottom: '102px' }}>
+          <div className="flex flex-col items-center" style={{ gap: '40px' }}>
+            {/* Badge pill */}
+            <div className="admin-badge-pill inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2" style={{ background: 'rgba(255,255,255,0.06)' }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+              <span className="text-white/50 text-xs font-medium">Admin Console</span>
+              <span className="text-orange-400 text-xs font-medium">Authorized Access Only</span>
+            </div>
+
+            {/* Heading with gradient */}
+            <h1 className="admin-hero-heading font-medium leading-tight" style={{ maxWidth: '613px', fontSize: 'clamp(36px, 5vw, 56px)', lineHeight: '1.28' }}>
+              Command Center for PingDish
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-white/60 font-normal leading-relaxed" style={{ maxWidth: '680px', fontSize: '15px', marginTop: '-16px' }}>
+              Manage restaurant onboarding, review enquiries, monitor platform health, and keep your ecosystem running at peak performance — all from one place.
+            </p>
+
+            {/* Login card — floating glass */}
+            <form onSubmit={handleLogin} className="w-full" style={{ maxWidth: '420px' }}>
+              <div className={`admin-login-card rounded-2xl p-8 transition-all duration-500 ${loginFocused ? 'admin-login-card-focused' : ''}`}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 border border-orange-500/20 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-orange-400" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-white font-semibold text-sm">Secure Login</div>
+                    <div className="text-white/40 text-xs">HMAC-SHA256 authenticated</div>
+                  </div>
+                </div>
+                <div className="relative mb-5">
+                  <input
+                    type="password"
+                    value={adminKey}
+                    onChange={e => setAdminKey(e.target.value)}
+                    onFocus={() => setLoginFocused(true)}
+                    onBlur={() => setLoginFocused(false)}
+                    required
+                    autoFocus
+                    placeholder="Enter admin secret key"
+                    className="w-full px-4 py-3.5 bg-white/[0.04] border border-white/10 rounded-xl text-white placeholder-white/25 text-sm focus:border-orange-500/50 focus:outline-none focus:bg-white/[0.06] transition-all duration-300"
+                  />
+                  <Shield className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                </div>
+                <PillButton variant="solid" type="submit" className="w-full">
+                  <span className="flex items-center justify-center gap-2">
+                    <LogIn className="w-4 h-4" /> Access Dashboard
+                  </span>
+                </PillButton>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
+
+        {/* Bottom ambient glow */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-orange-500/5 rounded-full blur-[150px] pointer-events-none" />
       </div>
     );
   }
 
+  /* ═══ DASHBOARD — Premium admin interface ═══ */
   return (
-    <div className="min-h-screen bg-[#080e1a] text-white">
-      {/* Header */}
-      <header className="border-b border-white/5 bg-[#0a1120]">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center">
-              <Bell className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-bold">PingDish Admin</span>
+    <div className="min-h-screen bg-[#060b14] text-white" style={{ fontFamily: "'General Sans', 'Inter', system-ui, sans-serif" }}>
+      {/* Dashboard header with glass effect */}
+      <header className="admin-dash-header sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto flex items-center justify-between" style={{ padding: '16px 32px' }}>
+          <div className="flex items-center gap-4">
+            <a href="/" className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <Bell className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-lg font-bold text-white tracking-tight">PingDish</span>
+            </a>
+            <div className="h-6 w-px bg-white/10 mx-2 hidden md:block" />
+            <span className="hidden md:block text-white/40 text-xs font-medium uppercase tracking-widest">Admin Console</span>
           </div>
-          <a href="/" className="text-gray-500 hover:text-white text-sm transition-colors">← Back to site</a>
+          <div className="flex items-center gap-3">
+            <PillButton variant="outline">
+              <span className="flex items-center gap-2 text-xs">
+                <Shield className="w-3.5 h-3.5 text-orange-400" /> Secured
+              </span>
+            </PillButton>
+            <a href="/">
+              <PillButton variant="outline">
+                <span className="flex items-center gap-2 text-xs">
+                  <ArrowRight className="w-3.5 h-3.5 rotate-180" /> Back to Site
+                </span>
+              </PillButton>
+            </a>
+          </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto" style={{ padding: '32px 32px 64px' }}>
+        {/* ═══ Stats Overview Cards — Premium Glass ═══ */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-10">
+          {[
+            { label: 'Restaurants', value: restaurants.length, icon: Building2, color: 'orange' },
+            { label: 'Pending', value: enquiries.filter(e => e.Status === 'PENDING').length, icon: Clock, color: 'amber' },
+            { label: 'Active', value: restaurants.filter(r => r.Status === 'ACTIVE').length, icon: Check, color: 'emerald' },
+            { label: 'Total Tables', value: restaurants.reduce((sum: number, r: any) => sum + (parseInt(r.NumberOfTables) || 0), 0), icon: BarChart3, color: 'blue' },
+          ].map((stat, i) => (
+            <div key={i} className="admin-stat-card group relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:scale-[1.02]">
+              <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20 -translate-y-8 translate-x-8 transition-opacity group-hover:opacity-30 ${
+                stat.color === 'orange' ? 'bg-orange-500' : stat.color === 'amber' ? 'bg-amber-500' : stat.color === 'emerald' ? 'bg-emerald-500' : 'bg-blue-500'
+              }`} />
+              <div className="relative z-10">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+                  stat.color === 'orange' ? 'bg-orange-500/10 border border-orange-500/20' :
+                  stat.color === 'amber' ? 'bg-amber-500/10 border border-amber-500/20' :
+                  stat.color === 'emerald' ? 'bg-emerald-500/10 border border-emerald-500/20' :
+                  'bg-blue-500/10 border border-blue-500/20'
+                }`}>
+                  <stat.icon className={`w-5 h-5 ${
+                    stat.color === 'orange' ? 'text-orange-400' : stat.color === 'amber' ? 'text-amber-400' : stat.color === 'emerald' ? 'text-emerald-400' : 'text-blue-400'
+                  }`} />
+                </div>
+                <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
+                <div className="text-[11px] text-white/40 font-semibold uppercase tracking-widest">{stat.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Toast */}
         {msg && (
-          <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 ${msg.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
-            {msg.type === 'success' ? '✓' : '✕'} {msg.text}
+          <div className={`admin-toast mb-8 px-5 py-4 rounded-2xl text-sm font-medium flex items-center gap-3 ${msg.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${msg.type === 'success' ? 'bg-emerald-500/20' : 'bg-red-500/20'}`}>
+              {msg.type === 'success' ? '✓' : '✕'}
+            </span>
+            {msg.text}
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex gap-1 bg-white/5 rounded-xl p-1 mb-8 w-fit">
-          <button onClick={() => { setTab('enquiries'); loadEnquiries(filter); }}
-            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === 'enquiries' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-white'}`}>
-            Enquiries
-          </button>
-          <button onClick={() => { setTab('restaurants'); loadRestaurants(); }}
-            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === 'restaurants' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-white'}`}>
-            Restaurants
-          </button>
+        {/* Tab bar + Search in a single row */}
+        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
+          <div className="flex gap-1 bg-white/[0.03] border border-white/5 rounded-2xl p-1.5 shrink-0">
+            <button onClick={() => { setTab('enquiries'); loadEnquiries(filter); }}
+              className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${tab === 'enquiries' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>
+              Enquiries
+            </button>
+            <button onClick={() => { setTab('restaurants'); loadRestaurants(); }}
+              className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${tab === 'restaurants' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>
+              Restaurants
+            </button>
+          </div>
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder={tab === 'enquiries' ? 'Search enquiries by name, email, or company...' : 'Search restaurants by name, ID, or email...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="admin-search-input w-full pl-11 pr-4 py-3 bg-white/[0.03] border border-white/5 rounded-xl text-white placeholder-white/20 focus:border-orange-500/30 focus:outline-none focus:bg-white/[0.05] transition-all duration-300 text-sm"
+            />
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
         </div>
 
         {/* Enquiries Tab */}
@@ -695,41 +985,69 @@ function AdminPanel({ apiUrl, apiFetch }: { apiUrl: string; apiFetch: (url: stri
             <div className="flex items-center gap-2 mb-6">
               {['PENDING', 'APPROVED', 'DECLINED'].map(s => (
                 <button key={s} onClick={() => { setFilter(s); loadEnquiries(s); }}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide transition-colors ${filter === s ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+                  className={`px-5 py-2 rounded-full text-xs font-semibold uppercase tracking-widest transition-all duration-300 border ${
+                    filter === s
+                      ? s === 'PENDING' ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' : s === 'APPROVED' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border-red-500/30 text-red-400'
+                      : 'border-white/5 text-white/30 hover:text-white/60 hover:border-white/10'
+                  }`}>
                   {s}
                 </button>
               ))}
             </div>
 
             {loading ? (
-              <div className="text-center py-16 text-gray-500">Loading...</div>
+              <div className="flex items-center justify-center py-20">
+                <div className="admin-spinner w-8 h-8 border-2 border-orange-500/20 border-t-orange-500 rounded-full" />
+              </div>
             ) : enquiries.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-gray-500">No {filter.toLowerCase()} enquiries</p>
+              <div className="text-center py-20">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-7 h-7 text-white/20" />
+                </div>
+                <p className="text-white/30 text-sm">No {filter.toLowerCase()} enquiries</p>
               </div>
             ) : (
               <div className="grid gap-4">
-                {enquiries.map(eq => (
-                  <div key={eq.EnquiryId} className="bg-white/[0.03] border border-white/5 rounded-xl p-5 hover:border-white/10 transition-colors">
+                {enquiries.filter(eq => {
+                  if (!searchQuery) return true;
+                  const q = searchQuery.toLowerCase();
+                  return (eq.Company?.toLowerCase().includes(q) || eq.Name?.toLowerCase().includes(q) || eq.Email?.toLowerCase().includes(q));
+                }).map(eq => (
+                  <div key={eq.EnquiryId} className="admin-card group bg-white/[0.02] border border-white/5 rounded-2xl p-6 hover:border-orange-500/10 hover:bg-white/[0.03] transition-all duration-300">
                     <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-white">{eq.Company}</h3>
-                        <p className="text-gray-500 text-sm">{eq.Name} · {eq.Email}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/10 flex items-center justify-center">
+                          <Building2 className="w-5 h-5 text-orange-400/70" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-white text-sm">{eq.Company}</h3>
+                          <p className="text-white/30 text-xs">{eq.Name} · {eq.Email}</p>
+                        </div>
                       </div>
-                      <span className="text-gray-600 text-xs">{eq.CreatedAt?.slice(0, 10)}</span>
+                      <span className="text-white/20 text-xs font-mono">{eq.CreatedAt?.slice(0, 10)}</span>
                     </div>
-                    {eq.Tables && <p className="text-gray-500 text-xs mb-1">📍 Locations: {eq.Tables}</p>}
-                    {eq.Message && <p className="text-gray-400 text-sm mt-2 bg-white/[0.02] rounded-lg p-3 italic">"{eq.Message}"</p>}
+                    {eq.Tables && <p className="text-white/30 text-xs mb-1 ml-13">Tables: {eq.Tables}</p>}
+                    {eq.Message && (
+                      <p className="text-white/40 text-sm mt-3 bg-white/[0.02] rounded-xl p-4 border border-white/5 italic leading-relaxed">
+                        &ldquo;{eq.Message}&rdquo;
+                      </p>
+                    )}
                     {filter === 'PENDING' && (
-                      <div className="flex gap-2 mt-4 pt-4 border-t border-white/5">
+                      <div className="flex gap-3 mt-5 pt-5 border-t border-white/5">
                         <button onClick={() => setApproveForm({ id: eq.EnquiryId, restaurantId: eq.Company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), restaurantName: eq.Company, numberOfTables: eq.Tables || '10' })}
-                          className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 px-5 py-2 rounded-lg text-sm font-medium transition-colors">✓ Approve</button>
+                          className="admin-action-btn bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2">
+                          <Check className="w-4 h-4" /> Approve
+                        </button>
                         <button onClick={() => handleDecline(eq.EnquiryId)}
-                          className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-5 py-2 rounded-lg text-sm font-medium transition-colors">✕ Decline</button>
+                          className="admin-action-btn bg-red-500/10 hover:bg-red-500/15 text-red-400 border border-red-500/20 px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2">
+                          <X className="w-4 h-4" /> Decline
+                        </button>
                       </div>
                     )}
                     {filter === 'APPROVED' && eq.RestaurantId && (
-                      <p className="text-green-400/70 text-xs mt-3 pt-3 border-t border-white/5">Restaurant ID: <span className="font-mono">{eq.RestaurantId}</span></p>
+                      <p className="text-emerald-400/60 text-xs mt-4 pt-4 border-t border-white/5 flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5" /> Restaurant ID: <span className="font-mono text-emerald-400/80">{eq.RestaurantId}</span>
+                      </p>
                     )}
                   </div>
                 ))}
@@ -742,42 +1060,63 @@ function AdminPanel({ apiUrl, apiFetch }: { apiUrl: string; apiFetch: (url: stri
         {tab === 'restaurants' && (
           <>
             {loading ? (
-              <div className="text-center py-16 text-gray-500">Loading...</div>
+              <div className="flex items-center justify-center py-20">
+                <div className="admin-spinner w-8 h-8 border-2 border-orange-500/20 border-t-orange-500 rounded-full" />
+              </div>
             ) : restaurants.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-gray-500">No restaurants onboarded yet</p>
+              <div className="text-center py-20">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center mx-auto mb-4">
+                  <Building2 className="w-7 h-7 text-white/20" />
+                </div>
+                <p className="text-white/30 text-sm">No restaurants onboarded yet</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="admin-table-wrapper overflow-x-auto rounded-2xl border border-white/5 bg-white/[0.015]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-white/5 text-left text-gray-500 text-xs uppercase tracking-wider">
-                      <th className="pb-3 pr-4">Restaurant</th>
-                      <th className="pb-3 pr-4">Owner</th>
-                      <th className="pb-3 pr-4">Email</th>
-                      <th className="pb-3 pr-4">Tables</th>
-                      <th className="pb-3 pr-4">Status</th>
-                      <th className="pb-3 pr-4">Created</th>
-                      <th className="pb-3">Actions</th>
+                    <tr className="border-b border-white/5">
+                      <th className="text-left text-[11px] font-semibold text-white/30 uppercase tracking-widest py-4 px-6">Restaurant</th>
+                      <th className="text-left text-[11px] font-semibold text-white/30 uppercase tracking-widest py-4 px-4">Owner</th>
+                      <th className="text-left text-[11px] font-semibold text-white/30 uppercase tracking-widest py-4 px-4">Email</th>
+                      <th className="text-left text-[11px] font-semibold text-white/30 uppercase tracking-widest py-4 px-4">Tables</th>
+                      <th className="text-left text-[11px] font-semibold text-white/30 uppercase tracking-widest py-4 px-4">Status</th>
+                      <th className="text-left text-[11px] font-semibold text-white/30 uppercase tracking-widest py-4 px-4">Created</th>
+                      <th className="text-left text-[11px] font-semibold text-white/30 uppercase tracking-widest py-4 px-4">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {restaurants.map(r => (
-                      <tr key={r.RestaurantId} className="border-b border-white/5 hover:bg-white/[0.02]">
-                        <td className="py-4 pr-4">
-                          <div className="font-medium text-white">{r.RestaurantName}</div>
-                          <div className="text-gray-600 text-xs font-mono">{r.RestaurantId}</div>
+                    {restaurants.filter(r => {
+                      if (!searchQuery) return true;
+                      const q = searchQuery.toLowerCase();
+                      return (r.RestaurantName?.toLowerCase().includes(q) || r.RestaurantId?.toLowerCase().includes(q) || r.OwnerEmail?.toLowerCase().includes(q) || r.OwnerName?.toLowerCase().includes(q));
+                    }).map(r => (
+                      <tr key={r.RestaurantId} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/10 flex items-center justify-center shrink-0">
+                              <span className="text-orange-400 text-xs font-bold">{r.RestaurantName?.[0]}</span>
+                            </div>
+                            <div>
+                              <div className="font-medium text-white text-sm">{r.RestaurantName}</div>
+                              <div className="text-white/20 text-xs font-mono">{r.RestaurantId}</div>
+                            </div>
+                          </div>
                         </td>
-                        <td className="py-4 pr-4 text-gray-400">{r.OwnerName}</td>
-                        <td className="py-4 pr-4 text-gray-400">{r.OwnerEmail}</td>
-                        <td className="py-4 pr-4 text-gray-400">{r.NumberOfTables}</td>
-                        <td className="py-4 pr-4">
-                          <span className={`px-2 py-1 rounded-md text-xs font-medium ${r.Status === 'ACTIVE' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>{r.Status}</span>
+                        <td className="py-4 px-4 text-white/50 text-sm">{r.OwnerName}</td>
+                        <td className="py-4 px-4 text-white/50 text-sm">{r.OwnerEmail}</td>
+                        <td className="py-4 px-4 text-white/50 text-sm text-center">{r.NumberOfTables}</td>
+                        <td className="py-4 px-4">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${r.Status === 'ACTIVE' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${r.Status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                            {r.Status}
+                          </span>
                         </td>
-                        <td className="py-4 pr-4 text-gray-500 text-xs">{r.CreatedAt?.slice(0, 10)}</td>
-                        <td className="py-4">
+                        <td className="py-4 px-4 text-white/30 text-xs font-mono">{r.CreatedAt?.slice(0, 10)}</td>
+                        <td className="py-4 px-4">
                           <button onClick={() => handleResetPassword(r.RestaurantId)}
-                            className="text-orange-400 hover:text-orange-300 text-xs font-medium transition-colors">Reset Password</button>
+                            className="text-orange-400/70 hover:text-orange-400 text-xs font-medium transition-all duration-300 hover:underline underline-offset-4">
+                            Reset Password
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -788,32 +1127,40 @@ function AdminPanel({ apiUrl, apiFetch }: { apiUrl: string; apiFetch: (url: stri
           </>
         )}
 
-        {/* Approve Modal */}
+        {/* Approve Modal — Premium Glass */}
         {approveForm && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="bg-[#0d1526] border border-white/10 rounded-2xl p-8 w-full max-w-md shadow-2xl">
-              <h3 className="font-bold text-xl mb-1">Approve Restaurant</h3>
-              <p className="text-gray-500 text-sm mb-6">Password will be auto-generated and emailed to the owner.</p>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 admin-modal-overlay">
+            <div className="admin-modal bg-[#0a1120] border border-white/10 rounded-3xl p-8 w-full max-w-md shadow-2xl shadow-black/50 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-orange-500/30 to-transparent" />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                  <Check className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-white">Approve Restaurant</h3>
+                  <p className="text-white/30 text-xs">Credentials will be auto-generated and emailed</p>
+                </div>
+              </div>
               <div className="space-y-4 mb-8">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">Restaurant ID (URL slug)</label>
+                  <label className="block text-[11px] font-semibold text-white/30 mb-1.5 uppercase tracking-widest">Restaurant ID (URL slug)</label>
                   <input value={approveForm.restaurantId} onChange={e => setApproveForm({ ...approveForm, restaurantId: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-sm focus:border-orange-500 focus:outline-none transition-colors" />
+                    className="w-full px-4 py-3 bg-white/[0.04] border border-white/5 rounded-xl text-white font-mono text-sm focus:border-orange-500/30 focus:outline-none transition-all duration-300" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">Restaurant Name</label>
+                  <label className="block text-[11px] font-semibold text-white/30 mb-1.5 uppercase tracking-widest">Restaurant Name</label>
                   <input value={approveForm.restaurantName} onChange={e => setApproveForm({ ...approveForm, restaurantName: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:border-orange-500 focus:outline-none transition-colors" />
+                    className="w-full px-4 py-3 bg-white/[0.04] border border-white/5 rounded-xl text-white text-sm focus:border-orange-500/30 focus:outline-none transition-all duration-300" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">Number of Tables</label>
+                  <label className="block text-[11px] font-semibold text-white/30 mb-1.5 uppercase tracking-widest">Number of Tables</label>
                   <input type="number" value={approveForm.numberOfTables} onChange={e => setApproveForm({ ...approveForm, numberOfTables: e.target.value })} min="1"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:border-orange-500 focus:outline-none transition-colors" />
+                    className="w-full px-4 py-3 bg-white/[0.04] border border-white/5 rounded-xl text-white text-sm focus:border-orange-500/30 focus:outline-none transition-all duration-300" />
                 </div>
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setApproveForm(null)} className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl text-sm font-medium transition-colors">Cancel</button>
-                <button onClick={handleApprove} className="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-xl text-sm font-semibold transition-colors">Approve & Send Credentials</button>
+                <button onClick={() => setApproveForm(null)} className="flex-1 bg-white/[0.04] hover:bg-white/[0.08] py-3 rounded-xl text-sm font-medium transition-all duration-300 border border-white/5">Cancel</button>
+                <button onClick={handleApprove} className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 py-3 rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg shadow-emerald-500/20">Approve & Send</button>
               </div>
             </div>
           </div>
@@ -863,139 +1210,272 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4 relative">
-      <div className="grid-pattern absolute inset-0 z-0 opacity-30" />
+    <div className="relative min-h-screen overflow-hidden" style={{ fontFamily: "'Poppins', 'Inter', system-ui, sans-serif" }}>
+      {/* Background video */}
+      <video
+        autoPlay muted loop playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4"
+      />
+      {/* Dark overlay with warm orange undertone */}
+      <div className="absolute inset-0 z-[1] bg-[#080e1a]/40" />
 
-      {/* Background glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary-500/5 rounded-full blur-[120px] pointer-events-none" />
+      {/* Two-panel split layout */}
+      <div className="relative z-10 flex min-h-screen">
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <a href="#" className="inline-flex items-center gap-2.5">
-            <div className="w-11 h-11 bg-primary-500 rounded-xl flex items-center justify-center">
-              <Bell className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-white tracking-tight">PingDish</span>
-          </a>
-        </div>
+        {/* ─── LEFT PANEL (52%) — Hero branding ─── */}
+        <div className="w-full lg:w-[52%] relative flex flex-col">
+          {/* Liquid glass strong overlay — orange-tinted */}
+          <div className="liquid-glass-orange absolute inset-4 lg:inset-6 rounded-3xl" />
 
-        {/* Login Card */}
-        <div className="glass-card rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl">
-          <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-primary-500/10 border border-primary-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <LogIn className="w-7 h-7 text-primary-500" />
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
-            <p className="text-gray-500 text-sm">Sign in to access your kitchen dashboard</p>
-          </div>
-
-          {loginError && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6 flex items-start gap-3">
-              <div className="w-5 h-5 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <X className="w-3 h-3 text-red-400" />
+          {/* Nav */}
+          <nav className="relative z-20 flex items-center justify-between px-8 lg:px-12 pt-6 lg:pt-8">
+            <a href="#" className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <Bell className="w-4.5 h-4.5 text-white" />
               </div>
-              <p className="text-red-400 text-sm">{loginError}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-1.5">Restaurant ID *</label>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                  <ChefHat className="w-4.5 h-4.5" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={loginForm.restaurantId}
-                  onChange={(e) => setLoginForm(prev => ({ ...prev, restaurantId: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
-                  className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 transition-colors font-mono text-sm"
-                  placeholder="the-cozy-bistro"
-                />
-              </div>
-              <p className="text-xs text-gray-600 mt-1">The unique ID given to you when your restaurant was registered</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-1.5">Password *</label>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                  <Lock className="w-4.5 h-4.5" />
-                </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                  className="w-full pl-11 pr-12 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 transition-colors"
-                  placeholder="Enter your password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoggingIn}
-              className="w-full bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isLoggingIn ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                <>
-                  <LogIn className="w-5 h-5" />
-                  Sign In to Dashboard
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-gray-600 text-xs">Need help?</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
-
-          {/* Help links */}
-          <div className="space-y-3">
-            <a
-              href="#contact-sales"
-              className="block w-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-center py-3 rounded-xl text-sm font-medium transition-all"
-            >
-              Don't have an account? Contact Sales
+              <span className="text-2xl font-semibold text-white tracking-tighter">PingDish</span>
             </a>
-            <p className="text-center text-gray-600 text-xs">
-              Forgot your credentials?{' '}
-              <a href="#contact-sales" className="text-primary-400 hover:text-primary-300 transition-colors">
-                Reach out to our team
-              </a>
+            <a href="#" className="liquid-glass rounded-full px-4 py-2 text-white/80 text-sm font-medium flex items-center gap-2 hover:scale-105 transition-transform">
+              <ArrowRight className="w-3.5 h-3.5 rotate-180" /> Home
+            </a>
+          </nav>
+
+          {/* Hero content — centered */}
+          <div className="relative z-10 flex-1 flex flex-col items-start justify-center px-8 lg:px-12 py-12">
+            {/* Logo mark — orange accent */}
+            <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-3xl flex items-center justify-center mb-8 backdrop-blur-sm" style={{ background: 'rgba(249, 115, 22, 0.12)', boxShadow: '0 0 40px rgba(249, 115, 22, 0.08)' }}>
+              <Bell className="w-8 h-8 lg:w-10 lg:h-10 text-orange-400" />
+            </div>
+
+            {/* Heading — orange gradient on italic */}
+            <h1 className="text-5xl lg:text-7xl font-medium text-white tracking-[-0.05em] leading-[1.05] mb-6" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              Welcome to<br />
+              <span style={{ fontFamily: "'Source Serif 4', Georgia, serif" }} className="italic text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-300">your kitchen</span>{' '}
+              hub
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-white/50 text-sm leading-relaxed max-w-sm mb-8 lg:mb-0">
+              Sign in to access your real-time kitchen dashboard, manage tables, and respond to customer pings instantly.
             </p>
+
+            {/* Mobile login form — shown only below lg breakpoint */}
+            <div className="w-full lg:hidden mt-4">
+              <div className="liquid-glass-orange rounded-3xl p-6">
+                {loginError && (
+                  <div className="bg-red-500/10 rounded-xl p-3 mb-4 flex items-start gap-2">
+                    <X className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                    <p className="text-red-400 text-xs">{loginError}</p>
+                  </div>
+                )}
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-orange-400/50 mb-1.5 uppercase tracking-widest">Restaurant ID</label>
+                    <input
+                      type="text" required autoFocus
+                      value={loginForm.restaurantId}
+                      onChange={(e) => setLoginForm(prev => ({ ...prev, restaurantId: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                      className="w-full px-4 py-3 bg-white/[0.04] rounded-xl text-white placeholder-white/20 text-sm font-mono focus:outline-none focus:bg-orange-500/[0.04] transition-all"
+                      style={{ border: '1px solid rgba(249,115,22,0.1)', boxShadow: 'inset 0 1px 1px rgba(249,115,22,0.05)' }}
+                      placeholder="the-cozy-bistro"
+                    />
+                  </div>
+                  <div className="relative">
+                    <label className="block text-xs font-medium text-orange-400/50 mb-1.5 uppercase tracking-widest">Password</label>
+                    <input
+                      type={showPassword ? 'text' : 'password'} required
+                      value={loginForm.password}
+                      onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                      className="w-full px-4 py-3 pr-11 bg-white/[0.04] rounded-xl text-white placeholder-white/20 text-sm focus:outline-none focus:bg-orange-500/[0.04] transition-all"
+                      style={{ border: '1px solid rgba(249,115,22,0.1)', boxShadow: 'inset 0 1px 1px rgba(249,115,22,0.05)' }}
+                      placeholder="Enter your password"
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-[2.1rem] text-orange-400/30 hover:text-orange-400/60 transition-colors">
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <button type="submit" disabled={isLoggingIn}
+                    className="w-full rounded-full py-3.5 text-white text-sm font-medium flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg shadow-orange-500/20">
+                    {isLoggingIn ? (
+                      <><div className="admin-spinner w-4 h-4 border-2 border-white/20 border-t-white rounded-full" /> Signing in...</>
+                    ) : (
+                      <><LogIn className="w-4 h-4" /> Sign In to Dashboard</>
+                    )}
+                  </button>
+                </form>
+                <div className="flex items-center gap-3 mt-5">
+                  <div className="h-px flex-1 bg-orange-500/10" />
+                  <span className="text-orange-400/30 text-xs">Need help?</span>
+                  <div className="h-px flex-1 bg-orange-500/10" />
+                </div>
+                <a href="#contact-sales" className="block text-center text-orange-400/40 text-xs mt-3 hover:text-orange-400/70 transition-colors">
+                  Don't have an account? Contact Sales
+                </a>
+              </div>
+            </div>
+
+            {/* Liquid glass pills — orange tinted */}
+            <div className="hidden lg:flex flex-wrap gap-3 mt-8">
+              {['Real-Time Alerts', 'WebSocket Powered', 'Multi-Branch Ready'].map(pill => (
+                <span key={pill} className="liquid-glass rounded-full px-4 py-2 text-xs font-medium" style={{ color: 'rgba(251,191,36,0.7)', borderColor: 'rgba(249,115,22,0.15)' }}>
+                  {pill}
+                </span>
+              ))}
+            </div>
+
+            {/* Bottom quote */}
+            <div className="mt-auto pt-8 hidden lg:block">
+              <p className="text-xs tracking-widest uppercase text-orange-400/30 mb-3">Trusted Platform</p>
+              <p className="text-white/60 text-sm leading-relaxed max-w-sm" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                &ldquo;PingDish transformed how we <span style={{ fontFamily: "'Source Serif 4', Georgia, serif" }} className="italic text-orange-300/50">connect with every table</span> in real time.&rdquo;
+              </p>
+              <div className="flex items-center gap-3 mt-3">
+                <div className="h-px flex-1 bg-orange-500/15 max-w-[40px]" />
+                <span className="text-[10px] tracking-[0.2em] uppercase text-orange-400/20 font-medium">500+ Restaurants</span>
+                <div className="h-px flex-1 bg-orange-500/15 max-w-[40px]" />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Back to landing */}
-        <div className="text-center mt-6">
-          <a href="#" className="text-gray-500 hover:text-gray-300 text-sm transition-colors inline-flex items-center gap-1.5">
-            <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-            Back to PingDish
-          </a>
+        {/* ─── RIGHT PANEL (48%) — Login form (Desktop) ─── */}
+        <div className="hidden lg:flex w-[48%] flex-col py-6 pr-6 gap-5 relative z-10">
+
+          {/* Top bar */}
+          <div className="flex items-center justify-between">
+            <div className="liquid-glass rounded-full px-1.5 py-1.5 flex items-center gap-1">
+              {[
+                { label: 'Features', href: '#features' },
+                { label: 'Pricing', href: '#pricing' },
+                { label: 'Contact', href: '#contact-sales' },
+              ].map(({ label, href }) => (
+                <a key={label} href={href} className="px-3 py-1.5 text-xs text-white/50 hover:text-orange-400 font-medium transition-colors rounded-full hover:bg-orange-500/5">
+                  {label}
+                </a>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <a href="#contact-sales" className="liquid-glass rounded-full p-2 text-orange-400/70 hover:text-orange-400 hover:scale-105 transition-all">
+                <Sparkles className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+
+          {/* Info card — orange accent */}
+          <div className="liquid-glass rounded-3xl p-5 w-64 self-end" style={{ borderColor: 'rgba(249,115,22,0.08)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 rounded-lg bg-orange-500/15 flex items-center justify-center">
+                <Zap className="w-3 h-3 text-orange-400" />
+              </div>
+              <h4 className="text-white text-sm font-medium">Kitchen Dashboard</h4>
+            </div>
+            <p className="text-white/40 text-xs leading-relaxed">Manage pings, track response times, and serve customers faster than ever.</p>
+          </div>
+
+          {/* Login form card — fills remaining space */}
+          <div className="mt-auto liquid-glass-orange rounded-[2.5rem] p-8 flex flex-col">
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.12)', boxShadow: '0 0 30px rgba(249,115,22,0.06)' }}>
+                <LogIn className="w-6 h-6 text-orange-400" />
+              </div>
+              <div>
+                <h2 className="text-white text-xl font-medium" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                  Sign <span style={{ fontFamily: "'Source Serif 4', Georgia, serif" }} className="italic text-orange-400/80">in</span>
+                </h2>
+                <p className="text-white/40 text-xs">Access your kitchen dashboard</p>
+              </div>
+            </div>
+
+            {/* Error */}
+            {loginError && (
+              <div className="rounded-xl p-3 mb-5 flex items-start gap-2" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                <X className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                <p className="text-red-400 text-xs leading-relaxed">{loginError}</p>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleLogin} className="space-y-5 flex-1">
+              <div>
+                <label className="block text-[11px] font-medium text-orange-400/40 mb-2 uppercase tracking-widest">Restaurant ID</label>
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                    <ChefHat className="w-4 h-4 text-orange-400/25" />
+                  </div>
+                  <input
+                    type="text" required autoFocus
+                    value={loginForm.restaurantId}
+                    onChange={(e) => setLoginForm(prev => ({ ...prev, restaurantId: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                    className="login-glass-input w-full pl-11 pr-4 py-3.5 bg-white/[0.03] rounded-2xl text-white placeholder-white/15 text-sm font-mono focus:outline-none focus:bg-orange-500/[0.04] transition-all"
+                    style={{ border: '1px solid rgba(249,115,22,0.1)', boxShadow: 'inset 0 1px 1px rgba(249,115,22,0.04)' }}
+                    placeholder="the-cozy-bistro"
+                  />
+                </div>
+                <p className="text-[10px] text-white/20 mt-1.5 pl-1">The unique ID given during registration</p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-orange-400/40 mb-2 uppercase tracking-widest">Password</label>
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                    <Lock className="w-4 h-4 text-orange-400/25" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'} required
+                    value={loginForm.password}
+                    onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                    className="login-glass-input w-full pl-11 pr-12 py-3.5 bg-white/[0.03] rounded-2xl text-white placeholder-white/15 text-sm focus:outline-none focus:bg-orange-500/[0.04] transition-all"
+                    style={{ border: '1px solid rgba(249,115,22,0.1)', boxShadow: 'inset 0 1px 1px rgba(249,115,22,0.04)' }}
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-400/20 hover:text-orange-400/50 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* CTA — PingDish orange gradient */}
+              <button
+                type="submit"
+                disabled={isLoggingIn}
+                className="w-full rounded-full py-4 text-white text-sm font-medium flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 group bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/35"
+              >
+                {isLoggingIn ? (
+                  <><div className="admin-spinner w-4 h-4 border-2 border-white/20 border-t-white rounded-full" /> Signing in...</>
+                ) : (
+                  <>
+                    Sign In to Dashboard
+                    <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Bottom help section */}
+            <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(249,115,22,0.08)' }}>
+              <div className="flex items-center justify-between">
+                <a href="#contact-sales" className="text-white/30 text-xs hover:text-orange-400/60 transition-colors">
+                  Don't have an account?
+                </a>
+                <a href="#contact-sales" className="liquid-glass rounded-full px-4 py-1.5 text-xs text-orange-400/60 font-medium hover:scale-105 hover:text-orange-400 transition-all">
+                  Contact Sales
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Bottom ambient orange glow */}
+      <div className="absolute bottom-0 left-1/4 w-[600px] h-[250px] bg-orange-500/5 rounded-full blur-[150px] pointer-events-none z-[2]" />
     </div>
   );
 }
@@ -1011,6 +1491,9 @@ function App() {
   const [isAdminRoute, setIsAdminRoute] = useState(false);
   const [isLoginRoute, setIsLoginRoute] = useState(false);
   const [isAdminPanel, setIsAdminPanel] = useState(false);
+
+  // Initialize scroll reveal animations
+  useScrollReveal();
 
   // Hash-based routing: #admin-register (admin only), #login (restaurant owners), #admin (admin panel)
   useEffect(() => {
@@ -1241,17 +1724,20 @@ function App() {
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-navy-950 to-transparent z-10" />
       </section>
 
+      {/* ─── SOCIAL PROOF TICKER ─── */}
+      <SocialProofTicker />
+
       {/* ─── TRUSTED BY / STATS BAR ─── */}
       <StatsBar />
 
       {/* ─── FEATURES ─── */}
       <section id="features" className="bg-navy-950 py-24 relative">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 reveal-up">
             <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">Features</span>
             <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
               Everything you need to{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
+              <span className="animated-gradient-text">
                 level up
               </span>{' '}
               service
@@ -1261,7 +1747,7 @@ function App() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 reveal-stagger reveal-up">
             {[
               {
                 icon: <Bell className="w-7 h-7" />,
@@ -1304,11 +1790,11 @@ function App() {
       <section id="how-it-works" className="bg-navy-900 py-24 relative overflow-hidden">
         <div className="grid-pattern absolute inset-0 z-0 opacity-50" />
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 reveal-up">
             <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">How It Works</span>
             <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
               Set up in{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
+              <span className="animated-gradient-text">
                 3 simple steps
               </span>
             </h2>
@@ -1362,11 +1848,11 @@ function App() {
       {/* ─── PRICING ─── */}
       <section id="pricing" className="bg-navy-950 py-24">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 reveal-up">
             <span className="text-primary-500 text-sm font-semibold tracking-widest uppercase">Pricing</span>
             <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-4">
               Plans that{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
+              <span className="animated-gradient-text">
                 scale with you
               </span>
             </h2>
@@ -1459,6 +1945,9 @@ function App() {
           </div>
         </div>
       </section>
+
+      {/* ─── TESTIMONIALS ─── */}
+      <Testimonials />
 
       {/* ─── CONTACT SALES ─── */}
       <section id="contact-sales" className="bg-navy-900 py-24 relative overflow-hidden">

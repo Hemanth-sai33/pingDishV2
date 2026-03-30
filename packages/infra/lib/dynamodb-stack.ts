@@ -12,6 +12,7 @@ export class DynamoDbStack extends cdk.Stack {
   public readonly connectionsTable: dynamodb.Table;
   public readonly enquiriesTable: dynamodb.Table;
   public readonly restaurantsTable: dynamodb.Table;
+  public readonly auditLogTable: dynamodb.Table;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -71,6 +72,22 @@ export class DynamoDbStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
       pointInTimeRecovery: true,
+    });
+    // AuditLog: PK = AuditId — stores admin action audit trail with auto-expiry
+    this.auditLogTable = new dynamodb.Table(this, 'AuditLogTable', {
+      tableName: 'PingDish-AuditLog',
+      partitionKey: { name: 'AuditId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      pointInTimeRecovery: true,
+      timeToLiveAttribute: 'ExpiresAt',                           // Auto-expire audit logs after 90 days
+    });
+    // GSI to query audit logs by entity (e.g., all actions on a specific restaurant)
+    this.auditLogTable.addGlobalSecondaryIndex({
+      indexName: 'EntityType-Timestamp-Index',
+      partitionKey: { name: 'EntityType', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'Timestamp', type: dynamodb.AttributeType.STRING },
     });
   }
 }
